@@ -545,7 +545,6 @@ class td_custom_features {
                                 "description" => '',
                                 "group" => "",
                             ),
-
                             array(
                                 "param_name" => "separator",
                                 "type" => "text_separator",
@@ -1368,6 +1367,151 @@ class td_custom_features {
                             ),
                         ),
                         self::get_block_style()
+                    )
+                )
+            );
+
+            td_api_block::add('td_block_contractors_categories',
+                array(
+                    "map_in_visual_composer" => true,
+                    "map_in_td_composer" => true,
+                    "name" => 'Contractors Categories',
+                    "base" => 'td_block_contractors_categories',
+                    "class" => 'td_block_contractors_categories',
+                    "controls" => "full",
+                    "category" => 'Blocks',
+                    "tdc_category" => 'External',
+                    //'icon' => 'icon-pagebuilder-td_block_77',
+                    'file' => $this->plugin_path . '/blocks/td_block_contractors_categories.php',
+                    'params' => array_merge(
+                        array(
+                            array(
+                                "param_name" => "separator",
+                                "type"       => "text_separator",
+                                'heading'    => 'General settings',
+                                "value"      => "",
+                                "class"      => "tdc-separator-small",
+                                "group"       => '',
+                            ),
+                            array(
+                                "param_name" => "contractors_taxonomy",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Taxonomy",
+                                "description" => "Insert the taxonomy",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-big",
+                                "placeholder" => "ex.: Category"
+                            ),
+                            array(
+                                "param_name" => "contractors_user_role",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "User Role",
+                                "description" => "Insert the user role",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-big",
+                                "placeholder" => "ex.: Admin"
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type"       => "text_separator",
+                                'heading'    => 'Plan settings',
+                                "value"      => "",
+                                "class"      => "tdc-separator-small",
+                                "group"       => '',
+                            ),
+                            array(
+                                "param_name" => "contractors_plan_id1",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Plan ID",
+                                "description" => "Insert the contractor plan ID1",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-small",
+                                "placeholder" => "Ex.: 1"
+                            ),
+                            array(
+                                "param_name" => "contractors_plan_id1_categories_limit",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Plan ID Categories Limit",
+                                "description" => "Insert the contractor plan ID1 categories limit",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-small",
+                                "placeholder" => "Ex.: 5"
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "horizontal_separator",
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "contractors_plan_id2",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Plan ID",
+                                "description" => "Insert the contractor plan ID2",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-small",
+                                "placeholder" => "Ex.: 2"
+                            ),
+                            array(
+                                "param_name" => "contractors_plan_id2_categories_limit",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Plan ID Categories Limit",
+                                "description" => "Insert the contractor plan ID2 categories limit",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-small",
+                                "placeholder" => "Ex.: 3"
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "horizontal_separator",
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "contractors_plan_id3",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Plan ID",
+                                "description" => "Insert the contractor plan ID3",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-small",
+                                "placeholder" => "Ex.: 3"
+                            ),
+                            array(
+                                "param_name" => "contractors_plan_id3_categories_limit",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Plan ID Categories Limit",
+                                "description" => "Insert the contractor plan ID3 categories limit",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-small",
+                                "placeholder" => "Ex.: 1"
+                            ),
+                            array(
+                                'param_name' => 'el_class',
+                                'type' => 'textfield',
+                                'value' => '',
+                                'heading' => 'Extra class',
+                                'description' => 'Style particular content element differently - add a class name and refer to it in custom CSS',
+                                'class' => 'tdc-textfield-extrabig',
+                            ),
+                            array(
+                                'param_name' => 'tdc_css',
+                                'value' => '',
+                                'type' => 'tdc_css_editor',
+                                'heading' => '',
+                                'group' => 'Design options',
+                            )
+
+                        )
                     )
                 )
             );

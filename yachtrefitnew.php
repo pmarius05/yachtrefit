@@ -20,18 +20,21 @@ define( 'TDCW_YR_PATH', dirname( __FILE__ ) );
 require_once ('database/index.php');
 //require_once ('chat-app/index.php');
 require_once ('shortcodes/config.php');
+require_once ('td-contractors-categories-ajax.php');
 require_once ('td_cw_yr_ajax.php');
 
 class YachtRefit {
 
     var $notifications_table;
+    var $plugin_url = '';
 
     public function __construct()
     {
         $this->notifications_table = 'tdcwn_notifications';
+        $this->plugin_url = plugins_url('', __FILE__);
 
         add_action( 'init', array($this, 'add_client_role') );
-        add_action( 'template_redirect', array($this, 'manage_access_to_client_dashboard') );
+//        add_action( 'template_redirect', array($this, 'manage_access_to_client_dashboard') );
         add_action( 'template_redirect', array($this, 'manage_user_pages_access') );
         add_action( 'save_post_job', array( $this, 'register_notification' ), 10, 3 );
     }
@@ -65,10 +68,12 @@ class YachtRefit {
        }
     }
 
+    //Add job page
     public function manage_user_pages_access()
     {
         global $post;
-        if ( current_user_can('td_contractor_role') && $post->ID == 855 ) {
+
+        if ( isset($post) && current_user_can('td_contractor_role') && $post->ID == 906 ) {
             wp_redirect(home_url());
             exit;
         }
@@ -145,9 +150,6 @@ class YachtRefit {
 //            echo 'some error';
         }
     }
-
-
-
 
 }
 
