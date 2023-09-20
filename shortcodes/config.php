@@ -4,8 +4,11 @@ add_action('tdc_init', function(){
 }, 11);
 
 class td_custom_features {
+
     var $plugin_url = '';
     var $plugin_path = '';
+
+
     function __construct()
     {
         $this->plugin_url = plugins_url('', __FILE__); // path used for elements like images, css, etc which are available on end user
@@ -14,8 +17,10 @@ class td_custom_features {
 
         add_action( 'tdc_loaded' , function() {
 
-            // Add shortcode
-            //add the api code inside this function
+            /* --
+            -- SHORTCODES.
+            -- */
+            /* -- Chat. -- */
             td_api_block::add('td_block_chat',
                 array(
                     "map_in_visual_composer" => true,
@@ -52,6 +57,7 @@ class td_custom_features {
                 )
             );
 
+            /* -- Notifications. -- */
             td_api_block::add('td_block_contractors_notifications',
                 array(
                     "map_in_visual_composer" => true,
@@ -88,6 +94,349 @@ class td_custom_features {
                 )
             );
 
+            /* -- Login/register. -- */
+            td_api_block::add( 'tds_create_account_yr',
+                array(
+                    "map_in_td_composer" => true,
+                    "name" => 'Page login/register',
+                    "base" => 'tds_create_account_yr',
+                    'tdc_category' => 'Blocks',
+                    "file" => $this->plugin_path . '/blocks/tds_create_account_yr.php',
+                    'tdc_style_params' => array(
+                        'show_version',
+                        'show_notif',
+                        'el_class',
+                    ),
+                    "params" => array_merge(
+                        array(
+                            array(
+                                "param_name" => "show_version",
+                                "type" => "dropdown",
+                                "value" => array(
+                                    'Login' => '',
+                                    'Register' => 'register',
+                                    'Forgot password' => 'forgot_pass',
+                                    'Logged in' => 'logged_in',
+                                ),
+                                "heading" => 'Show in composer',
+                                "description" => "",
+                                "holder" => "div",
+                                "class" => "tdc-dropdown-big",
+                                "group" => "",
+                            ),
+
+                            array(
+                                "param_name" => "separator",
+                                "type" => "text_separator",
+                                'heading' => 'General',
+                                "value" => "",
+                                "class" => "",
+                                "group" => '',
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Accent color',
+                                "param_name" => "accent_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Links hover color',
+                                "param_name" => "a_color_h",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "horizontal_separator",
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => "",
+                            ),
+                        ),
+                        td_config_helper::get_map_block_font_array( 'f_text', true, 'General text', '', '', 'tdc-s-global-font' ),
+
+                        array(
+                            array(
+                                "param_name" => "separator",
+                                "type" => "text_separator",
+                                'heading' => 'Sections',
+                                "value" => "",
+                                "class" => "",
+                                "group" => '',
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Title color',
+                                "param_name" => "sec_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+
+                            array(
+                                "param_name" => "separator",
+                                "type" => "text_separator",
+                                'heading' => 'Forms',
+                                "value" => "",
+                                "class" => "",
+                                "group" => '',
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Helper text color',
+                                "param_name" => "form_help_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Footer text color',
+                                "param_name" => "form_foot_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "text_separator",
+                                'heading' => 'Labels',
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => '',
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Text color',
+                                "param_name" => "label_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "text_separator",
+                                'heading' => 'Inputs',
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => '',
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Text color',
+                                "param_name" => "input_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Background color',
+                                "param_name" => "input_bg",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "horizontal_separator",
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "all_input_border",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Border size",
+                                "description" => "",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-big",
+                                "placeholder" => "2"
+                            ),
+                            array(
+                                "param_name" => "all_input_border_style",
+                                "type" => "dropdown-responsive",
+                                "value" => array(
+                                    'Solid' => 'solid',
+                                    'Dashed' => 'dashed',
+                                    'Dotted' => 'dotted',
+                                    'Double' => 'double',
+                                ),
+                                "heading" => 'Border style',
+                                "description" => "",
+                                "holder" => "div",
+                                "class" => "tdc-dropdown-big",
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "input_radius",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Border radius",
+                                "description" => "",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-big",
+                                "placeholder" => "5"
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Border color',
+                                "param_name" => "all_input_border_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+
+                            array(
+                                "param_name" => "separator",
+                                "type" => "text_separator",
+                                'heading' => 'Buttons',
+                                "value" => "",
+                                "class" => "",
+                                "group" => '',
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "tdc-colorpicker-double-a",
+                                "heading" => 'Text color',
+                                "param_name" => "btn_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "tdc-colorpicker-double-b",
+                                "heading" => 'Text hover color',
+                                "param_name" => "btn_color_h",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Background hover color',
+                                "param_name" => "btn_bg_h",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "horizontal_separator",
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => "",
+                            ),
+                            array(
+                                "param_name" => "btn_radius",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Border radius",
+                                "description" => "",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-big",
+                                "placeholder" => "5"
+                            ),
+
+                            array(
+                                "param_name" => "separator",
+                                "type" => "text_separator",
+                                'heading' => 'Notification messages',
+                                "value" => "",
+                                "class" => "",
+                                "group" => '',
+                            ),
+                            array(
+                                "param_name" => "show_notif",
+                                "type" => "checkbox",
+                                "value" => '',
+                                "heading" => "Show in composer",
+                                "description" => "",
+                                "holder" => "div",
+                                "class" => "",
+                            ),
+                            array(
+                                "param_name" => "notif_radius",
+                                "type" => "textfield-responsive",
+                                "value" => '',
+                                "heading" => "Border radius",
+                                "description" => "",
+                                "holder" => "div",
+                                "class" => "tdc-textfield-big",
+                                "placeholder" => "3"
+                            ),
+                            array(
+                                "param_name" => "separator",
+                                "type" => "horizontal_separator",
+                                "value" => "",
+                                "class" => "tdc-separator-small",
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Information accent color',
+                                "param_name" => "notif_info_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Success accent color',
+                                "param_name" => "notif_succ_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                            array(
+                                "type" => "colorpicker",
+                                "holder" => "div",
+                                "class" => "",
+                                "heading" => 'Error accent color',
+                                "param_name" => "notif_error_color",
+                                "value" => '',
+                                "description" => '',
+                                "group" => "",
+                            ),
+                        ),
+                        self::get_block_style()
+                    )
+                )
+            );
+
+            /* -- My account. -- */
             td_api_block::add( 'tds_my_account_yr',
                 array(
                     "map_in_td_composer" => true,
@@ -1053,6 +1402,5 @@ class td_custom_features {
             )
         );
     }
-
 
 }

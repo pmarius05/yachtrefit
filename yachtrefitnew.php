@@ -13,9 +13,14 @@
 
 if ( !function_exists( 'add_action' )) { exit; }
 
+define( 'TDCW_YR_VER', '1' );
+define( 'TDCW_YR_URL', plugin_dir_url( __FILE__ ) );
+define( 'TDCW_YR_PATH', dirname( __FILE__ ) );
+
 require_once ('database/index.php');
 //require_once ('chat-app/index.php');
 require_once ('shortcodes/config.php');
+require_once ('td_cw_yr_ajax.php');
 
 class YachtRefit {
 
