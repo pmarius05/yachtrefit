@@ -3,6 +3,9 @@
 class td_block_chat extends td_block {
 
     var $messages_table;
+    var $messages_index_table;
+    var $plugin_path;
+    var $plugin_url;
 
     public function get_custom_css() {
         // $unique_block_class - the unique class that is on the block. use this to target the specific instance via css
@@ -33,18 +36,204 @@ class td_block_chat extends td_block {
     function __construct() {
         parent::disable_loop_block_features();
 
-        $this->messages_table = 'tdcwn_messages';
+        $this->plugin_url = plugins_url('', __FILE__); // path used for elements like images, css, etc which are available on end user
+        $this->plugin_path = dirname(__FILE__); // used for internal (server side) files
+
+        global $wpdb;
+
+        $this->messages_table = $wpdb->prefix . 'tdcwn_messages';
+        $this->messages_index_table = $wpdb->prefix . 'tdcwn_messages_index';
+
+        add_action('before_my_script_enqueue', array( $this, 'localize_my_script'));
+    }
+
+    function display_attachment_by_id($attachment_id) {
+        // Check if it's a valid attachment
+        if (get_post_type($attachment_id) !== 'attachment') {
+            return '';
+        }
+
+        $mime_type = get_post_mime_type($attachment_id);
+        $media_url = wp_get_attachment_url($attachment_id);
+
+        // Image
+        if (strpos($mime_type, 'image') !== false) {
+            return '<a href="'.get_attachment_link($attachment_id).'" target="_blank">' . wp_get_attachment_image($attachment_id, 'thumbnail').'</a>';
+//            return;
+        }
+
+        // Audio
+        if (strpos($mime_type, 'audio') !== false) {
+            echo '<audio controls>
+                <source src="' . esc_url($media_url) . '" type="' . esc_attr($mime_type) . '">
+                Your browser does not support the audio element.
+              </audio>';
+            return;
+        }
+
+        // Video
+        if (strpos($mime_type, 'video') !== false) {
+            echo '<video width="320" height="240" controls>
+                <source src="' . esc_url($media_url) . '" type="' . esc_attr($mime_type) . '">
+                Your browser does not support the video tag.
+              </video>';
+            return;
+        }
+
+        // Other file types
+        echo '<a href="' . esc_url($media_url) . '" target="_blank">Download ' . basename($media_url) . '</a>';
+    }
+
+    function sanitize_and_validate_file($file) {
+        // Check file size (e.g., 5MB limit)
+//        if ($file['size'] > 5 * 1024 * 1024) {
+//            return array('error' => 'File size is too large.');
+//        }
+
+        // Check file type and MIME type
+        $file_type = wp_check_filetype($file['name']);
+        $allowed_file_types = array(
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            // Added document types
+            'pdf' => 'application/pdf',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+
+        if (!array_key_exists($file_type['ext'], $allowed_file_types) || $file_type['type'] != $allowed_file_types[$file_type['ext']]) {
+            return array('error' => 'Invalid file type. Allowed files: images (.jpg, .jpeg, .png, .gif), PDF, Excel (XLS, XLSX), Word documents (DOC, DOCX).');
+        }
+
+        // Rename the file for sanitation
+        $file['name'] = sanitize_file_name($file['name']);
+
+        // Image-specific processing
+        if (in_array($file_type['type'], array('image/jpeg', 'image/png', 'image/gif'))) {
+            // Check for PHP content in the image
+            $content = file_get_contents($file['tmp_name']);
+            if (strpos($content, '<?php') !== false) {
+                return array('error' => 'File contains PHP content.');
+            }
+
+            // Re-save the image using a trusted library to strip out malicious content
+            $editor = wp_get_image_editor($file['tmp_name']);
+            if (!is_wp_error($editor)) {
+                $editor->save($file['tmp_name']);
+            } else {
+                return array('error' => 'Failed to process the image.');
+            }
+        }
+
+        // If it's a document, no image-specific processing is required
+        // Additional security checks for documents could be implemented here if necessary
+
+        return $file;
+    }
+
+    function sanitize_and_validate_image($file) {
+        // Check file size (e.g., 5MB limit)
+        if ($file['size'] > 5 * 1024 * 1024) {
+            return array('error' => 'File size is too large.');
+        }
+
+        // Check file type and MIME type
+        $file_type = wp_check_filetype($file['name']);
+        $allowed_file_types = array(
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'pdf' => 'application/pdf',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+
+        if (!array_key_exists($file_type['ext'], $allowed_file_types) || $file_type['type'] != $allowed_file_types[$file_type['ext']]) {
+            return array('error' => 'Invalid file type. Allowed files: images (.jpg, .jpeg, .png), PDF, Excel (XLS, XLSX), Word documents (DOC, DOCX).');
+        }
+
+        // Rename the file for sanitation
+        $file['name'] = sanitize_file_name($file['name']);
+
+        // Check for PHP content in the image
+        $content = file_get_contents($file['tmp_name']);
+        if (strpos($content, '<?php') !== false) {
+            return array('error' => 'File contains PHP content.');
+        }
+
+        // Re-save the image using a trusted library to strip out malicious content
+        $editor = wp_get_image_editor($file['tmp_name']);
+        if (!is_wp_error($editor)) {
+            $editor->save($file['tmp_name']);
+        } else {
+            return array('error' => 'Failed to process the image.');
+        }
+
+        return $file;
+    }
+
+    function get_current_user_role() {
+        if ( is_user_logged_in() ) {
+            $user = wp_get_current_user();
+            $roles = ( array ) $user->roles;
+            return implode(', ', $roles); // This will return a string if the user has multiple roles.
+        } else {
+            return null; // Or false, or an empty string, depending on how you want to handle this.
+        }
     }
 
 
-    function render( $atts, $content = null ) {
-        parent::render( $atts ); // sets the live atts, $this->atts, $this->block_uid, $this->td_query (it runs the query)
+    function allowed_user($id)
+    {
+        $current_user = $id;
+
+        if ( 'td_team_member' ==  $this->get_current_user_role()) {
+            $the_team_leader = get_user_meta(get_current_user_id(), 'tdcwn_team', true );
+
+//            echo '<pre>';
+//            print_r($the_team_leader);
+//            echo '</pre>';
+
+            $the_team_leader_team_list = get_user_meta($the_team_leader, 'tdcwn_team', true);
+
+//            echo '<pre>';
+//                print_r($the_team_leader_team_list);
+//            echo '</pre>';
+
+            if (in_array($current_user, $the_team_leader_team_list)) {
+                return true;
+            } else {
+                return false;
+            }
+
+        }elseif ( 'td_client_role' == $this->get_current_user_role() ) {
+            return true;
+        }elseif ( 'td_contractor_role' == $this->get_current_user_role() ) {
+            return true;
+        }else {
+            return false;
+        }
+
+    }
+
+
+    function render( $atts, $content = null )
+    {
+        parent::render($atts); // sets the live atts, $this->atts, $this->block_uid, $this->td_query (it runs the query)
 
         // flag to check if we are in composer
         $is_composer = false;
-        if( td_util::tdc_is_live_editor_iframe() || td_util::tdc_is_live_editor_ajax() ) {
+        if (td_util::tdc_is_live_editor_iframe() || td_util::tdc_is_live_editor_ajax()) {
             $is_composer = true;
         }
+
 
         global $wpdb;
 //        $wpdb->query(
@@ -57,585 +246,169 @@ class td_block_chat extends td_block {
 //        );
 
 
+        $current_user_id = get_current_user_id();
+        if ($this->allowed_user($current_user_id)) {
 
+
+            if (isset($_GET['chat']) && ctype_alnum($_GET['chat'])) {
+//        if ( isset($_GET['chat']) ) {
+
+                $chat_id = $_GET['chat'];
+
+                if (0 == $chat_id) {
+
+                    $client_id = (int)$_GET['c'];
+                    $job_id = (int)$_GET['j'];
+
+                    $chat_hex = md5(rand());
+
+                    // Check to see if there already is a conversation between the current user and the other user for the
+                    // specified job
+                    $existing_chat = $wpdb->get_var("
+                    SELECT `chat_id` 
+                    FROM `$this->messages_index_table`
+                    WHERE `job_id`='$job_id' 
+                      AND `client_id`='$client_id' 
+                      AND `contractor_id`='$current_user_id'
+                    LIMIT 1
+                ");
+
+                    if (isset($existing_chat)) {
+                        $url = home_url() . '/my-account/?messages&chat=' . $existing_chat;
+                        echo("<script>location.href = '" . $url . "'</script>");
+                    } else {
+                        $wpdb->query(
+                            "
+                        INSERT INTO `wp_tdcwn_messages_index` 
+                            (`id`, `job_id`, `chat_id`, `contractor_id`, `client_id`, `public`) 
+                        VALUES 
+                           (NULL, '$job_id', '$chat_hex', '$current_user_id', '$client_id', '1');
+                    "
+                        );
+
+                        $url = home_url() . '/my-account/?messages&chat=' . $chat_hex;
+                        echo("<script>location.href = '" . $url . "'</script>");
+                    }
+
+
+                } elseif (isset($chat_id) && $chat_id != 0) {
+
+                    $chat_id = $_GET['chat'];
+//echo $chat_id;
+                    $other_user_query = $wpdb->get_results("SELECT * FROM `$this->messages_index_table` WHERE `chat_id`='$chat_id'");
+
+//                echo '<pre>';
+//                    print_r($other_user_query);
+//                echo '</pre>';
+//                echo $current_user_id;
+
+                    if ($current_user_id == $other_user_query[0]->client_id) {
+                        $other_user = $other_user_query[0]->contractor_id;
+                    } else {
+                        $other_user = $other_user_query[0]->client_id;
+                    }
+
+//                var_dump($other_user);
+
+                    if (isset($_POST['submit'])) {
+
+                        $message = wp_kses_post($_POST['tnm']);
+
+                        if (isset($_FILES['file_to_upload'])) {
+                            require_once(ABSPATH . 'wp-admin/includes/file.php');
+                            $uploadedfile = $_FILES['file_to_upload'];
+
+                            $result = $this->sanitize_and_validate_file($uploadedfile);
+
+                            if ($result['error']) {
+//                            echo "Error: " . $result['error'];
+                                echo '<div class="tdcwn_error_message">
+                                    <span class="tdcwn_error_message-header">
+                                        Error:
+                                    </span>
+                                    <span class="tdcwn_error_message-body">
+                                        ' . $result['error'] . '
+                                    </span>
+                                    </div>';
+                            } else {
+
+                                $upload_overrides = array(
+                                    'test_form' => false,
+                                );
+
+                                $movefile = wp_handle_upload($uploadedfile, $upload_overrides);
+
+                                if ($movefile && !isset($movefile['error'])) {
+
+                                    $filetype = wp_check_filetype(basename($movefile['file']), null);
+
+                                    $attachment = array(
+                                        'guid' => $movefile['url'],
+                                        'post_mime_type' => $filetype['type'],
+                                        'post_title' => preg_replace('/\.[^.]+$/', '', basename($movefile['file'])),
+                                        'post_content' => '',
+                                        'post_status' => 'inherit'
+                                    );
+
+                                    // Insert the attachment into the media library
+                                    $attach_id = wp_insert_attachment($attachment, $movefile['file']);
+
+                                    // Make sure that this file is included, as wp_generate_attachment_metadata() depends on it
+                                    require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+                                    // Generate the metadata for the attachment, and update the database record
+                                    $attach_data = wp_generate_attachment_metadata($attach_id, $movefile['file']);
+                                    wp_update_attachment_metadata($attach_id, $attach_data);
+
+                                    //                            echo "File has been uploaded and its attachment ID is " . $attach_id;
+
+                                } else {
+                                    echo $movefile['error'];
+                                }
+                            }
+                        }
+
+                        if (!isset($attach_id)) $attach_id = 0;
+
+                        global $wpdb;
+                        $wpdb->query(
+                            "
+                INSERT INTO `wp_tdcwn_messages` 
+                    (`id`, `chat_id`, `user_from`, `user_to`, `message`, `file_id`, `timestamp`) 
+                    VALUES 
+                    (NULL, '$chat_id', '$current_user_id', '$other_user', '$message', '$attach_id' , current_timestamp());
+                "
+                        );
+                    }
+
+                    $get_chat_messages = $wpdb->get_results("
+                    SELECT * FROM `$this->messages_table` WHERE chat_id = '$chat_id' ORDER BY `id` DESC
+                ");
+
+
+                    $current_conversation_id = $wpdb->get_var("
+                    SELECT id FROM `$this->messages_index_table` WHERE `chat_id`='$chat_id'
+                ");
+
+                } else {
+                    $get_chat_messages = array('message' => 'Select a conversation');
+                }
+            }
+
+
+
+            $get_the_conversations = $wpdb->get_results("SELECT * FROM `$this->messages_index_table` 
+                                                        WHERE `client_id`= '$current_user_id'
+                                                        OR `contractor_id`= '$current_user_id'     
+                                                    ");
+        }
         $buffy = ''; //output buffer
 
         $buffy .= "
         <style>
+        
+        
 
-
-
-/* *******************************
-message-area
-******************************** */
-
-.message-area {
-    height: 100vh;
-    overflow: hidden;
-    padding: 30px 0;
-    background: #f5f5f5;
-}
-
-.chat-area {
-    position: relative;
-    width: 100%;
-    background-color: #fff;
-    border-radius: 0.3rem;
-    height: 90vh;
-    overflow: hidden;
-    min-height: calc(100% - 1rem);
-}
-
-.chatlist {
-    outline: 0;
-    height: 100%;
-    overflow: hidden;
-    width: 300px;
-    float: left;
-    padding: 15px;
-}
-
-.chat-area .modal-content {
-    border: none;
-    border-radius: 0;
-    outline: 0;
-    height: 100%;
-}
-
-.chat-area .modal-dialog-scrollable {
-    height: 100% !important;
-}
-
-.chatbox {
-    width: auto;
-    overflow: hidden;
-    height: 100%;
-    border-left: 1px solid #ccc;
-}
-
-.chatbox .modal-dialog,
-.chatlist .modal-dialog {
-    max-width: 100%;
-    margin: 0;
-}
-
-.msg-search {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.chat-area .form-control {
-    display: block;
-    width: 80%;
-    padding: 0.375rem 0.75rem;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #222;
-    background-color: #fff;
-    background-clip: padding-box;
-    border: 1px solid #ccc;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    border-radius: 0.25rem;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-}
-
-.chat-area .form-control:focus {
-    outline: 0;
-    box-shadow: inherit;
-}
-
-a.add img {
-    height: 36px;
-}
-
-.chat-area .nav-tabs {
-    border-bottom: 1px solid #dee2e6;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: inherit;
-}
-
-.chat-area .nav-tabs .nav-item {
-    width: 100%;
-}
-
-.chat-area .nav-tabs .nav-link {
-    width: 100%;
-    color: #180660;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.5;
-    text-transform: capitalize;
-    margin-top: 5px;
-    margin-bottom: -1px;
-    background: 0 0;
-    border: 1px solid transparent;
-    border-top-left-radius: 0.25rem;
-    border-top-right-radius: 0.25rem;
-}
-
-.chat-area .nav-tabs .nav-item.show .nav-link,
-.chat-area .nav-tabs .nav-link.active {
-    color: #222;
-    background-color: #fff;
-    border-color: transparent transparent #000;
-}
-
-.chat-area .nav-tabs .nav-link:focus,
-.chat-area .nav-tabs .nav-link:hover {
-    border-color: transparent transparent #000;
-    isolation: isolate;
-}
-
-.chat-list h3 {
-    color: #222;
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 1.5;
-    text-transform: capitalize;
-    margin-bottom: 0;
-}
-
-.chat-list p {
-    color: #343434;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.5;
-    text-transform: capitalize;
-    margin-bottom: 0;
-}
-
-.chat-list a.d-flex {
-    margin-bottom: 15px;
-    position: relative;
-    text-decoration: none;
-}
-
-.chat-list .active {
-    display: block;
-    content: '';
-    clear: both;
-    position: absolute;
-    bottom: 3px;
-    left: 34px;
-    height: 12px;
-    width: 12px;
-    background: #00DB75;
-    border-radius: 50%;
-    border: 2px solid #fff;
-}
-
-.msg-head h3 {
-    color: #222;
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1.5;
-    margin-bottom: 0;
-}
-
-.msg-head p {
-    color: #343434;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.5;
-    text-transform: capitalize;
-    margin-bottom: 0;
-}
-
-.msg-head {
-    padding: 15px;
-    border-bottom: 1px solid #ccc;
-}
-
-.moreoption {
-    display: flex;
-    align-items: center;
-    justify-content: end;
-}
-
-.moreoption .navbar {
-    padding: 0;
-}
-
-.moreoption li .nav-link {
-    color: #222;
-    font-size: 16px;
-}
-
-.moreoption .dropdown-toggle::after {
-    display: none;
-}
-
-.moreoption .dropdown-menu[data-bs-popper] {
-    top: 100%;
-    left: auto;
-    right: 0;
-    margin-top: 0.125rem;
-}
-
-.msg-body ul {
-    overflow: hidden;
-}
-
-.msg-body ul li {
-    list-style: none;
-    margin: 15px 0;
-}
-
-.msg-body ul li.sender {
-    display: block;
-    width: 100%;
-    position: relative;
-}
-
-.msg-body ul li.sender:before {
-    display: block;
-    clear: both;
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: -7px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 12px 15px 12px;
-    border-color: transparent transparent #f5f5f5 transparent;
-    -webkit-transform: rotate(-37deg);
-    -ms-transform: rotate(-37deg);
-    transform: rotate(-37deg);
-}
-
-.msg-body ul li.sender p {
-    color: #000;
-    font-size: 14px;
-    line-height: 1.5;
-    font-weight: 400;
-    padding: 15px;
-    background: #f5f5f5;
-    display: inline-block;
-    border-bottom-left-radius: 10px;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    margin-bottom: 0;
-}
-
-.msg-body ul li.sender p b {
-    display: block;
-    color: #180660;
-    font-size: 14px;
-    line-height: 1.5;
-    font-weight: 500;
-}
-
-.msg-body ul li.repaly {
-    display: block;
-    width: 100%;
-    text-align: right;
-    position: relative;
-}
-
-.msg-body ul li.repaly:before {
-    display: block;
-    clear: both;
-    content: '';
-    position: absolute;
-    bottom: 15px;
-    right: -7px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 12px 15px 12px;
-    border-color: transparent transparent #4b7bec transparent;
-    -webkit-transform: rotate(37deg);
-    -ms-transform: rotate(37deg);
-    transform: rotate(37deg);
-}
-
-.msg-body ul li.repaly p {
-    color: #fff;
-    font-size: 14px;
-    line-height: 1.5;
-    font-weight: 400;
-    padding: 15px;
-    background: #4b7bec;
-    display: inline-block;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    border-bottom-left-radius: 10px;
-    margin-bottom: 0;
-}
-
-.msg-body ul li.repaly p b {
-    display: block;
-    color: #061061;
-    font-size: 14px;
-    line-height: 1.5;
-    font-weight: 500;
-}
-
-.msg-body ul li.repaly:after {
-    display: block;
-    content: '';
-    clear: both;
-}
-
-.time {
-    display: block;
-    color: #000;
-    font-size: 12px;
-    line-height: 1.5;
-    font-weight: 400;
-}
-
-li.repaly .time {
-    margin-right: 20px;
-}
-
-.divider {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-}
-
-.msg-body h6 {
-    text-align: center;
-    font-weight: normal;
-    font-size: 14px;
-    line-height: 1.5;
-    color: #222;
-    background: #fff;
-    display: inline-block;
-    padding: 0 5px;
-    margin-bottom: 0;
-}
-
-.divider:after {
-    display: block;
-    content: '';
-    clear: both;
-    position: absolute;
-    top: 12px;
-    left: 0;
-    border-top: 1px solid #EBEBEB;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-}
-
-.send-box {
-    padding: 15px;
-    border-top: 1px solid #ccc;
-}
-
-.send-box form {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-}
-
-.send-box .form-control {
-    display: block;
-    width: 85%;
-    padding: 0.375rem 0.75rem;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #222;
-    background-color: #fff;
-    background-clip: padding-box;
-    border: 1px solid #ccc;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    border-radius: 0.25rem;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-}
-
-.send-box button {
-    border: none;
-    background: #3867d6;
-    padding: 0.375rem 5px;
-    color: #fff;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    font-weight: 400;
-    width: 24%;
-    margin-left: 1%;
-}
-
-.send-box button i {
-    margin-right: 5px;
-}
-
-.send-btns .button-wrapper {
-    position: relative;
-    width: 125px;
-    height: auto;
-    text-align: left;
-    margin: 0 auto;
-    display: block;
-    background: #F6F7FA;
-    border-radius: 3px;
-    padding: 5px 15px;
-    float: left;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    overflow: hidden;
-}
-
-.send-btns .button-wrapper span.label {
-    position: relative;
-    z-index: 1;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    width: 100%;
-    cursor: pointer;
-    color: #343945;
-    font-weight: 400;
-    text-transform: capitalize;
-    font-size: 13px;
-}
-
-#upload {
-    display: inline-block;
-    position: absolute;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.send-btns .attach .form-control {
-    display: inline-block;
-    width: 120px;
-    height: auto;
-    padding: 5px 8px;
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #343945;
-    background-color: #F6F7FA;
-    background-clip: padding-box;
-    border: 1px solid #F6F7FA;
-    border-radius: 3px;
-    margin-bottom: 5px;
-}
-
-.send-btns .button-wrapper span.label img {
-    margin-right: 5px;
-}
-
-.button-wrapper {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    text-align: center;
-    margin: 0 auto;
-}
-
-button:focus {
-    outline: 0;
-}
-
-.add-apoint {
-    display: inline-block;
-    margin-left: 5px;
-}
-
-.add-apoint a {
-    text-decoration: none;
-    background: #F6F7FA;
-    border-radius: 8px;
-    padding: 8px 8px;
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 1.2;
-    color: #343945;
-}
-
-.add-apoint a svg {
-    margin-right: 5px;
-}
-
-.chat-icon {
-    display: none;
-}
-
-.closess i {
-    display: none;
-}
-
-
-
-@media (max-width: 767px) {
-    .chat-icon {
-        display: block;
-        margin-right: 5px;
-    }
-    .chatlist {
-        width: 100%;
-    }
-    .chatbox {
-        width: 100%;
-        position: absolute;
-        left: 1000px;
-        right: 0;
-        background: #fff;
-        transition: all 0.5s ease;
-        border-left: none;
-    }
-    .showbox {
-        left: 0 !important;
-        transition: all 0.5s ease;
-    }
-    .msg-head h3 {
-        font-size: 14px;
-    }
-    .msg-head p {
-        font-size: 12px;
-    }
-    .msg-head .flex-shrink-0 img {
-        height: 30px;
-    }
-    .send-box button {
-        width: 28%;
-    }
-    .send-box .form-control {
-        width: 70%;
-    }
-    .chat-list h3 {
-        font-size: 14px;
-    }
-    .chat-list p {
-        font-size: 12px;
-    }
-    .msg-body ul li.sender p {
-        font-size: 13px;
-        padding: 8px;
-        border-bottom-left-radius: 6px;
-        border-top-right-radius: 6px;
-        border-bottom-right-radius: 6px;
-    }
-    .msg-body ul li.repaly p {
-        font-size: 13px;
-        padding: 8px;
-        border-top-left-radius: 6px;
-        border-top-right-radius: 6px;
-        border-bottom-left-radius: 6px;
-    }
-}
         </style>
         ";
 
@@ -651,450 +424,238 @@ button:focus {
 
         ob_start();
         ?>
-            <!--
-            <div class="tdcwn_chat_wrapper">
-                <div class="tdcwn_contacts-area">
-                    <div class="tdcwn_chat_contact">
-                        <a href="#">[Chat #1]</a>
-                    </div>
-                    <div class="tdcwn_chat_contact">
-                        <a href="#">[Chat #2]</a>
-                    </div>
-                    <div class="tdcwn_chat_contact">
-                        <a href="#">[Chat #3]</a>
-                    </div>
-                    <div class="tdcwn_chat_contact">
-                        <a href="#">[Chat #4]</a>
-                    </div>
-                </div>
-
-                <div class="tdcwn_messages-area">
-                    <p class="for-me">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    <p class="from-me">Quisque finibus ornare elit, quis bibendum ante commodo vitae.</p>
-                </div>
-            </div>
-            -->
-        <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
-
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
-        <!-- char-area -->
-        <section class="message-area">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="chat-area">
-                            <!-- chatlist -->
-                            <div class="chatlist">
-                                <div class="modal-dialog-scrollable">
-                                    <div class="modal-content">
-                                        <div class="chat-header">
-                                            <!--
-                                            <div class="msg-search">
-                                                <input type="text" class="form-control" id="inlineFormInputGroup" placeholder="Search" aria-label="search">
-                                                <a class="add" href="#"><img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/add.svg" alt="add"></a>
-                                            </div>
-                                            -->
-
-                                            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                                                <li class="nav-item" role="presentation">
-                                                    <button class="nav-link active" id="Open-tab" data-bs-toggle="tab" data-bs-target="#Open" type="button" role="tab" aria-controls="Open" aria-selected="true">Open</button>
-                                                </li>
-                                                <li class="nav-item" role="presentation">
-                                                    <button class="nav-link" id="Closed-tab" data-bs-toggle="tab" data-bs-target="#Closed" type="button" role="tab" aria-controls="Closed" aria-selected="false">Closed</button>
-                                                </li>
-                                            </ul>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <!-- chat-list -->
-                                            <div class="chat-lists">
-                                                <div class="tab-content" id="myTabContent">
-                                                    <div class="tab-pane fade show active" id="Open" role="tabpanel" aria-labelledby="Open-tab">
-                                                        <!-- chat-list -->
-                                                        <div class="chat-list">
-                                                            <a href="#" class="d-flex align-items-center">
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                    <span class="active"></span>-->
-<!--                                                                </div>-->
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h3>Chat #1</h3>
-                                                                    <p>Job title</p>
-                                                                </div>
-                                                            </a>
-                                                            <a href="#" class="d-flex align-items-center">
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h3>Chat #2</h3>
-                                                                    <p>Job title</p>
-                                                                </div>
-                                                            </a>
-                                                            <a href="#" class="d-flex align-items-center">
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h3>Chat #3</h3>
-                                                                    <p>Job title</p>
-                                                                </div>
-                                                            </a>
-                                                            <a href="#" class="d-flex align-items-center">
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h3>Chat #4</h3>
-                                                                    <p>Job title</p>
-                                                                </div>
-                                                            </a>
-                                                            <a href="#" class="d-flex align-items-center">
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h3>Chat #5 </h3>
-                                                                    <p>Job title</p>
-                                                                </div>
-                                                            </a>
-                                                            <a href="#" class="d-flex align-items-center">
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h3>Chat #6</h3>
-                                                                    <p>Job title</p>
-                                                                </div>
-                                                            </a>
-                                                            <a href="#" class="d-flex align-items-center">
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h3>Chat #7</h3>
-                                                                    <p>Job title</p>
-                                                                </div>
-                                                            </a>
 
 
-                                                        </div>
-                                                        <!-- chat-list -->
-                                                    </div>
-                                                    <div class="tab-pane fade" id="Closed" role="tabpanel" aria-labelledby="Closed-tab">
+        <!--        <link rel="stylesheet" href="--><?php //echo $this->plugin_url;?><!--../assets/css/messaging-system.css">-->
+        <link rel="stylesheet" href="<?php echo esc_url( untrailingslashit($this->plugin_url) . '/../assets/css/messaging-system.css' ); ?>">
 
-                                                        <!-- chat-list -->
-<!--                                                        <div class="chat-list">-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                    <span class="active"></span>-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Mehedi Hasan</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Ryhan</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Malek Hasan</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Sadik Hasan</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Bulu </h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Maria SK</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Dipa Hasan</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Jhon Hasan</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Tumpa Moni</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Payel Akter</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Baby Akter</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Zuwel Rana</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Habib </h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Jalal Ahmed</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Hasan Ali</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!--                                                            <a href="#" class="d-flex align-items-center">-->
-<!--                                                                <div class="flex-shrink-0">-->
-<!--                                                                    <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                                </div>-->
-<!--                                                                <div class="flex-grow-1 ms-3">-->
-<!--                                                                    <h3>Mehedi Hasan</h3>-->
-<!--                                                                    <p>front end developer</p>-->
-<!--                                                                </div>-->
-<!--                                                            </a>-->
-<!---->
-<!--                                                        </div>-->
-                                                        <!-- chat-list -->
-                                                    </div>
-                                                </div>
 
-                                            </div>
-                                            <!-- chat-list -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- chatlist -->
 
-                            <!-- chatbox -->
-                            <div class="chatbox showbox">
-                                <div class="modal-dialog-scrollable">
-                                    <div class="modal-content">
-                                        <div class="msg-head">
-                                            <div class="row">
-                                                <div class="col-8">
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="chat-icon"><img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/arroleftt.svg" alt="image title"></span>
-<!--                                                        <div class="flex-shrink-0">-->
-<!--                                                            <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/user.png" alt="user img">-->
-<!--                                                        </div>-->
-                                                        <div class="flex-grow-1 ms-3">
-                                                            <h3>Chat #1</h3>
-                                                            <p>Job title</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4">
-                                                    <!--
-                                                    <ul class="moreoption">
-                                                        <li class="navbar nav-item dropdown">
-                                                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v" aria-hidden="true"></i></a>
-                                                            <ul class="dropdown-menu">
-                                                                <li><a class="dropdown-item" href="#">Action</a></li>
-                                                                <li><a class="dropdown-item" href="#">Another action</a></li>
-                                                                <li>
-                                                                    <hr class="dropdown-divider">
-                                                                </li>
-                                                                <li><a class="dropdown-item" href="#">Something else here</a></li>
-                                                            </ul>
-                                                        </li>
-                                                    </ul>
-                                                    -->
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <div class="msg-body">
-                                                <ul>
-                                                    <li class="sender">
-                                                        <p> Hey, Are you there? </p>
-<!--                                                        <span class="time">10:06 am</span>-->
-                                                    </li>
-                                                    <li class="sender">
-                                                        <p> Hey, Are you there? </p>
-<!--                                                        <span class="time">10:16 am</span>-->
-                                                    </li>
-                                                    <li class="repaly">
-                                                        <p>yes!</p>
-<!--                                                        <span class="time">10:20 am</span>-->
-                                                    </li>
-                                                    <li class="sender">
-                                                        <p> Hey, Are you there? </p>
-<!--                                                        <span class="time">10:26 am</span>-->
-                                                    </li>
-                                                    <li class="sender">
-                                                        <p> Hey, Are you there? </p>
-<!--                                                        <span class="time">10:32 am</span>-->
-                                                    </li>
-                                                    <li class="repaly">
-                                                        <p>How are you?</p>
-<!--                                                        <span class="time">10:35 am</span>-->
-                                                    </li>
-                                                    <li>
-<!--                                                        <div class="divider">-->
-<!--                                                            <h6>Today</h6>-->
-<!--                                                        </div>-->
-                                                    </li>
-
-                                                    <li class="repaly">
-                                                        <p> yes, tell me</p>
-<!--                                                        <span class="time">10:36 am</span>-->
-                                                    </li>
-                                                    <li class="repaly">
-                                                        <p>yes... on it</p>
-<!--                                                        <span class="time">junt now</span>-->
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-                                        </div>
-
-                                        <div class="send-box">
-                                            <form action="">
-                                                <input type="text" class="form-control" aria-label="message…" placeholder="Write message…">
-
-                                                <button type="button"><i class="fa fa-paper-plane" aria-hidden="true"></i> Send</button>
-                                            </form>
-
-                                            <div class="send-btns">
-                                                <div class="attach">
-                                                    <div class="button-wrapper">
-                        <span class="label">
-                          <img class="img-fluid" src="https://mehedihtml.com/chatbox/assets/img/upload.svg" alt="image title"> attached file
-                        </span><input type="file" name="upload" id="upload" class="upload-box" placeholder="Upload File" aria-label="Upload File">
-                                                    </div>
-
-<!--                                                    <select class="form-control" id="exampleFormControlSelect1">-->
-<!--                                                        <option>Select template</option>-->
-<!--                                                        <option>Template 1</option>-->
-<!--                                                        <option>Template 2</option>-->
-<!--                                                    </select>-->
-
-<!--                                                    <div class="add-apoint">-->
-<!--                                                        <a href="#" data-toggle="modal" data-target="#exampleModal4"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewbox="0 0 16 16" fill="none">-->
-<!--                                                                <path d="M8 16C3.58862 16 0 12.4114 0 8C0 3.58862 3.58862 0 8 0C12.4114 0 16 3.58862 16 8C16 12.4114 12.4114 16 8 16ZM8 1C4.14001 1 1 4.14001 1 8C1 11.86 4.14001 15 8 15C11.86 15 15 11.86 15 8C15 4.14001 11.86 1 8 1Z" fill="#7D7D7D" />-->
-<!--                                                                <path d="M11.5 8.5H4.5C4.224 8.5 4 8.276 4 8C4 7.724 4.224 7.5 4.5 7.5H11.5C11.776 7.5 12 7.724 12 8C12 8.276 11.776 8.5 11.5 8.5Z" fill="#7D7D7D" />-->
-<!--                                                                <path d="M8 12C7.724 12 7.5 11.776 7.5 11.5V4.5C7.5 4.224 7.724 4 8 4C8.276 4 8.5 4.224 8.5 4.5V11.5C8.5 11.776 8.276 12 8 12Z" fill="#7D7D7D" />-->
-<!--                                                            </svg> Appoinment</a>-->
-<!--                                                    </div>-->
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        <div id="frame">
+            <div id="sidepanel">
+                <div id="profile">
+                    <div class="wrap">
+                        <p>My conversations</p>
+                        <div id="status-options">
+                            <ul>
+                                <li id="status-online" class="active"><span class="status-circle"></span> <p>Online</p></li>
+                                <li id="status-away"><span class="status-circle"></span> <p>Away</p></li>
+                                <li id="status-busy"><span class="status-circle"></span> <p>Busy</p></li>
+                                <li id="status-offline"><span class="status-circle"></span> <p>Offline</p></li>
+                            </ul>
                         </div>
-                        <!-- chatbox -->
-
+                        <div id="expanded">
+                            <label for="twitter"><i class="fa fa-facebook fa-fw" aria-hidden="true"></i></label>
+                            <input name="twitter" type="text" value="mikeross" />
+                            <label for="twitter"><i class="fa fa-twitter fa-fw" aria-hidden="true"></i></label>
+                            <input name="twitter" type="text" value="ross81" />
+                            <label for="twitter"><i class="fa fa-instagram fa-fw" aria-hidden="true"></i></label>
+                            <input name="twitter" type="text" value="mike.ross" />
+                        </div>
                     </div>
                 </div>
+                <!--                <div id="search">-->
+                <!--                    <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>-->
+                <!--                    <input type="text" placeholder="Search contacts..." />-->
+                <!--                </div>-->
+                <div id="contacts">
+                    <ul>
+                        <?php
+                        global $wp;
+                        foreach ($get_the_conversations as $conversation) {
+                            $active_conversation_class = '';
+                            if (isset($current_conversation_id) && $conversation->id == $current_conversation_id) $active_conversation_class = 'active';
+                            echo '
+                                    <li class="contact '. $active_conversation_class .'">
+                                        <a href="'.home_url($wp->request).'/?messages&chat='.$conversation->chat_id.'" class="for-mobile">
+                                            <span class="name">#' . $conversation->id .  ' </span>
+                                        </a>
+                                        
+                                        <a href="'.home_url($wp->request).'/?messages&chat='.$conversation->chat_id.'">
+                                            <div class="wrap">
+                                                <div class="meta">
+                                                    <p class="name">Conversation #' . $conversation->id .  ' </p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                ';
+                        }
+                        ?>
+
+
+                    </ul>
+                </div>
+                <div id="bottom-bar">
+                    <!--                    <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>Add contact</span></button>-->
+                    <!--                    <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>Settings</span></button>-->
+                </div>
             </div>
+            <div class="content">
+                <div class="contact-profile">
+                    <div>
+                        <!--                        <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />-->
+                        <p>Conversation #<?php if(isset($current_conversation_id)) echo $current_conversation_id; ?></p>
+                    </div>
+                    <!--                    <div class="social-media">-->
+                    <!--                        <i class="fa fa-facebook" aria-hidden="true"></i>-->
+                    <!--                        <i class="fa fa-twitter" aria-hidden="true"></i>-->
+                    <!--                        <i class="fa fa-instagram" aria-hidden="true"></i>-->
+                    <!--                    </div>-->
+                    <div class="tdcwn-message-success">
+                        <span>
+                            The message was successfully sent!
+                        </span>
+                    </div>
+                </div>
+                <div class="messages">
+                    <ul>
+                        <?php
+//                        echo '<pre>';
+//                        print_r($get_chat_messages);
+//                        echo '</pre>';
+                        if (isset($get_chat_messages)) {
+                            foreach ($get_chat_messages as $the_message) {
+                                $css_class = '';
+                                if ($the_message->user_from == $current_user_id) {
+                                    $css_class = 'sent';
+                                }else {
+                                    $css_class = 'replies';
+                                }
+                                echo '
+                            <li class=" ' . $css_class . ' ">
+                            '. $this->display_attachment_by_id($the_message->file_id) .'
+                                <p>' . $the_message->message . ' 
+                                
+                                 </p>
+                                
+                                 <span class="closed toggle-arrow"></span>
+                            </li>
+                            ';
+                            }
+                        }
+                        ?>
+
+                    </ul>
+                </div>
+                <div class="message-input">
+
+                    <div class="wrap" id="send-message" style="display: none">
+
+                        <div class="textarea-pop">
+                            <?php (isset($chat_id)) ? $chat_id : $chat_id = ''; ?>
+                            <form method="POST" action="?messages&chat=<?php echo $chat_id;?>" enctype="multipart/form-data">
+                                <textarea name="tnm" placeholder="Write your message"></textarea>
+                                <div class="bottom-line">
+                                    <span class="submit arrow-down">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
+                                    </span>
+                                    <input type="file" name="file_to_upload" id="file-input" />
+                                    <input type="submit" class="submit" name="submit" value="Send" />
+                                    <label for="file-input">
+                                        <img src='<?php echo $this->plugin_url . '/../assets/img/attach.svg'; ?>' />
+                                    </label>
+                                </div>
+
+                            </form>
+                        </div>
+<!--                        <button class="submit" id="send-the-message">Send</button>-->
+<!--                        <input class="submit attach-file" name="attach-file" type="file">-->
+<!--
+                       </input>-->
+<!--                        <div class="image-upload">-->
+<!--                            <label for="file-input">-->
+<!--                                <img src="--><?php //echo $this->plugin_url . '/../assets/img/attach.svg'; ?><!--" />-->
+<!--                            </label>-->
+<!---->
+<!--                            <input id="file-input" type="file"/>-->
+<!--                        </div>-->
+                    </div>
+
+                    <div class="wrap" id="reply-message">
+                        <span class="submit" id="reply-message">Reply</span>
+
+                    </div>
+
+
+                </div>
+<!--                <div class="textarea-pop">-->
+<!--                    <textarea placeholder="Write your message" id="the-message-to-be-sent" autofocus></textarea>-->
+<!--                    <input type="hidden" id="the-chat-id" value="--><?php //echo $chat_id;?><!--">-->
+<!--                    <input type="hidden" id="the-other-user" value="--><?php //echo $other_user;?><!--">-->
+<!--                </div>-->
+
             </div>
-        </section>
-        <!-- char-area -->
-
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script
-
-                jQuery(document).ready(function() {
-
-                jQuery(".chat-list a").click(function() {
-                    alert("test");
-                    $(".chatbox").addClass('showbox');
-                        return false;
-                    });
-
-                    $(".chat-icon").click(function() {
-                    $(".chatbox").removeClass('showbox');
-                    });
+        </div>
 
 
-                });
+
+        <!--        <script src="--><?php //echo esc_url( untrailingslashit($this->plugin_url) . '/../assets/js/script.js' ); ?><!--"></script>-->
+
+        <script>
+            //jQuery("#send-the-message").on('click', function () {
+            //
+            //    let message = document.getElementById('the-message-to-be-sent').value;
+            //    //console.log(<?php ////echo json_encode('f172873e6069d65e87acb679096018da'); ?>////);
+            //    //let chat_id = <?php ////echo json_encode($chat_id); ?>////;
+            //    //let other_user = <?php ////echo ($other_user); ?>////;
+            //    let chat_id = document.getElementById('the-chat-id').value;
+            //    let other_user = document.getElementById('the-other-user').value;
+            //    let image_to_send = document.getElementById('file-input').value;
+            //    console.log('img ' + image_to_send);
+            //    if (image_to_send.length == 0) {
+            //        console.log('image is empty');
+            //    }
+            //
+            //    jQuery.ajax({
+            //        url: my_ajax_object.ajax_url,
+            //        type: "POST",
+            //        data: {
+            //            action: 'tdcwn_send_message',
+            //            message: message,
+            //            other_user: other_user,
+            //            chat_id: chat_id,
+            //            image: image_to_send
+            //        },
+            //        success: function() {
+            //            jQuery('.textarea-pop').css({
+            //                "position" : "absolute",
+            //                "width" : "100%",
+            //                "transition" : "all 1s",
+            //                "bottom" : "auto"
+            //            });
+            //            jQuery("#reply-message").css({
+            //                "display" : "flex"
+            //            });
+            //            jQuery("#send-message").css({
+            //                "display" : "none"
+            //            });
+            //
+            //            jQuery(".tdcwn-message-success").css({
+            //                "display" : "block"
+            //            });
+            //            setTimeout(function() {
+            //                jQuery(".tdcwn-message-success").css({
+            //                    "display" : "none"
+            //                });
+            //            }, 5000);
+            //
+            //            console.log('Message sent!');
+            //            // console.log(this.success);
+            //        },
+            //        error: function() {
+            //            jQuery(".tdcwn-message-error").css({
+            //                "display" : "block"
+            //            });
+            //            setTimeout(function() {
+            //                jQuery(".tdcwn-message-error").css({
+            //                    "display" : "none"
+            //                });
+            //            }, 5000);
+            //            console.log( 'An error occurred' );
+            //        }
+            //    });
+            //});
         </script>
         <?php
         $buffy .= ob_get_clean();
@@ -1103,5 +664,12 @@ button:focus {
 
         return $buffy;
     }
+
+    function localize_my_script($chat_id) {
+        $translation_array = array('myJsVar' => $chat_id);
+        wp_localize_script('my-script', 'my_object_name', $translation_array);
+    }
+
+
 
 }

@@ -57,6 +57,43 @@ class td_custom_features {
                 )
             );
 
+            /* -- Chat. -- */
+            td_api_block::add('td_block_team',
+                array(
+                    "map_in_visual_composer" => true,
+                    "map_in_td_composer" => true,
+                    "name" => 'TD Team',
+                    "base" => 'td_block_team',
+                    "class" => 'td_block_team',
+                    "controls" => "full",
+                    "category" => 'Blocks',
+                    "tdc_category" => 'External',
+                    //'icon' => 'icon-pagebuilder-td_block_77',
+                    'file' => $this->plugin_path . '/blocks/td_block_team.php',
+                    'params' => array_merge(
+                        array(
+
+                            array(
+                                'param_name' => 'el_class',
+                                'type' => 'textfield',
+                                'value' => '',
+                                'heading' => 'Extra class',
+                                'description' => 'Style particular content element differently - add a class name and refer to it in custom CSS',
+                                'class' => 'tdc-textfield-extrabig',
+                            ),
+                            array(
+                                'param_name' => 'tdc_css',
+                                'value' => '',
+                                'type' => 'tdc_css_editor',
+                                'heading' => '',
+                                'group' => 'Design options',
+                            )
+
+                        )
+                    )
+                )
+            );
+
             /* -- Notifications. -- */
             td_api_block::add('td_block_contractors_notifications',
                 array(

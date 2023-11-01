@@ -76,7 +76,7 @@ class td_block_contractors_notifications extends td_block {
             color: #000;
             font-weight: 600;
         }
-       .action_contact-the-client:before {
+       .action_contact_the_client:before {
            font-family: "Font Awesome 6 Free";
            content: "\f0e0";
            display: inline-block;
@@ -86,7 +86,7 @@ class td_block_contractors_notifications extends td_block {
            font-size: 32px;
            margin-right: 5px;
         }
-        .action_contact-the-client {
+        .action_contact_the_client {
             font-weight: 600;
             font-size: 16px;
             display: inline-block;
@@ -125,31 +125,32 @@ class td_block_contractors_notifications extends td_block {
             ob_start();
             ?>
 
-                <div class="tdcwn_notification">
-                    <div class="tdcwn_notification_title accordion">
-                        <div class="tdcwn_notification_message">
+            <div class="tdcwn_notification">
+                <div class="tdcwn_notification_title accordion">
+                    <div class="tdcwn_notification_message">
                             <span class="action_open-details" title="Show details">
                                 <svg xmlns="http://www.w3.org/2000/svg" height="1.5em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
                             </span>
-                            <?php echo $notification->message; ?>
-                        </div>
-                        <div class="tdcwn_notification_actions">
-
-
-                        </div>
+                        <?php echo $notification->message; ?>
                     </div>
-                    <div class="tdcwn_notification_details panel">
-                        <div class="inner">
-                            <p>
-                                <strong>Job details</strong>
-                            </p>
+                    <div class="tdcwn_notification_actions">
+
+
+                    </div>
+                </div>
+                <div class="tdcwn_notification_details panel">
+                    <div class="inner">
+                        <p>
+                            <strong>Job details</strong>
+                        </p>
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum luctus odio eget mauris condimentum, ut aliquam eros mollis. Curabitur porttitor tincidunt augue vitae pulvinar. Aenean aliquam justo tortor, non tempus eros efficitur id. Praesent quis rutrum libero. Proin vel urna in augue malesuada sodales in quis lectus. Cras sollicitudin a arcu eu iaculis. Aliquam erat volutpat. Nulla quis purus sed massa commodo eleifend.
-                            <div>
-                                <a href="<?php echo get_home_url(); ?>/tds-my-account/?messages&chat=1" class="action_contact-the-client" title="Contact the client">Contact the client</a>
-                            </div>
+                        <div>
+                            <a href="<?php echo get_home_url(); ?>/my-account/?messages&chat=0&c=<?php echo $notification->client_id; ?>&j=<?php echo $notification->job_id; ?>" class="action_contact_the_client" title="Contact the client">Contact the client</a>
+                            <!--                                <span class="action_contact_the_client c---><?php //echo $notification->client_id; ?><!-- j---><?php //echo $notification->job_id ?><!--" id="action_contact-the-client">Contact the client</span>-->
                         </div>
                     </div>
                 </div>
+            </div>
 
             <?php
             $buffy .= ob_get_clean();
@@ -158,6 +159,43 @@ class td_block_contractors_notifications extends td_block {
 
 
         $buffy .= '</div>';
+
+//        $buffy .= '
+//           <script>
+//            jQuery(".action_contact_the_client").on("click", function () {
+//                var classString = this.classList;
+//                var classString = "action_contact_the_client c-9 j-10218"; // Replace this with your actual class string
+//
+//                // Split the class string into an array of individual classes
+//                var classes = classString.split(" ");
+//
+//                // Initialize variables to store the extracted values
+//                var value1 = null;
+//                var value2 = null;
+//
+//                // Iterate through the classes and extract the values
+//                for (var i = 0; i < classes.length; i++) {
+//                    var classParts = classes[i].split("-");
+//                    if (classParts.length === 2) {
+//                        var prefix = classParts[0];
+//                        var number = parseInt(classParts[1]);
+//
+//                        if (!isNaN(number)) {
+//                            if (prefix === "c") {
+//                                value1 = number;
+//                            } else if (prefix === "j") {
+//                                value2 = number;
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                console.log("Value 1:", value1); // Output: 7
+//                console.log("Value 2:", value2); // Output: 1028
+//
+//            });
+//           </script>
+//        ';
 
         return $buffy;
     }

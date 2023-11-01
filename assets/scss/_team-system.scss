@@ -1,0 +1,132 @@
+
+// Collapsible Closed
+details{
+  max-width: 960px;
+  margin: 1rem auto;
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 .25rem 1rem rgba(0, 0, 0, 0.1);
+
+  &:not([open]){
+    animation-name: fold-in;
+    animation-duration: .2s;
+  }
+
+  summary{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    padding: 1.5rem;
+    cursor: pointer;
+  }
+
+  // Disable browser default marker
+  summary::-webkit-details-marker,
+  summary::marker{
+    content: "";
+    display: none;
+  }
+
+  // Custom marker
+  summary::after{
+    content: "+";
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1;
+    margin-right: 1rem;
+    cursor: pointer;
+  }
+
+  .content{
+    padding: 0 1.5rem 1.5rem;
+  }
+}
+
+// Collapsible OPEN
+details[open]{
+
+  // Custom marker
+  summary::after{
+    content: "−";
+  }
+
+  .content{
+    animation-name: fold-out;
+    animation-duration: .2s;
+  }
+}
+
+// Fake it 'til you make it animations
+@keyframes fold-out {
+  0% {
+    opacity: 0;
+    margin-top: -1rem;
+  }
+
+  100% {
+    opacity: 1;
+    margin-top: 0;
+  }
+}
+
+@keyframes fold-in {
+  0% {
+    padding-bottom: 1rem;
+  }
+
+  100% {
+    padding-bottom: 0;
+  }
+}
+
+
+.tdcwn-tiny {
+  font-family: sans-serif;
+  font-size: 12px;
+  font-weight: 200;
+  color: #999999;
+}
+
+.margin-down-20 {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.tdcwn_form {
+
+  label {
+    color: #999;
+    font-weight: 600;
+    font-family: sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  input[type='text'],
+  input[type='password'],
+  input[type='email']
+  {
+    border: none;
+    border-bottom: 1px solid #999;
+    margin-bottom: 20px;
+  }
+}
+
+.team-members {
+  .team-member {
+
+    display: flex;
+    justify-content: space-between;
+
+    .details {
+      display: flex;
+      justify-content: space-between;
+    }
+    span {
+      font-family: var(--accent-color);
+      font-size: 16px;
+      font-weight: 400;
+    }
+  }
+}
