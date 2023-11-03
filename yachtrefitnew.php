@@ -17,6 +17,9 @@ define( 'TDCW_YR_VER', '1' );
 define( 'TDCW_YR_URL', plugin_dir_url( __FILE__ ) );
 define( 'TDCW_YR_PATH', dirname( __FILE__ ) );
 
+define( 'ADD_JOB_PAGE', '906');
+
+require_once ('includes/tdcwnUtil.php');
 //require_once ('database/index.php');
 //require_once ('chat-app/index.php');
 require_once ('shortcodes/config.php');
@@ -118,6 +121,7 @@ class YachtRefit {
             __('Team member', 'TD-YRN'),
             array(
                 'read' => true,
+                'create_users' => false
             )
         );
     }
@@ -136,8 +140,13 @@ class YachtRefit {
     public function manage_user_pages_access()
     {
         global $post;
+        global $tdcwnUtil;
 
-        if ( isset($post) && current_user_can('td_contractor_role') && $post->ID == 906 ) {
+        $current_user_id = get_current_user_id();
+        $the_team = $tdcwnUtil->get_the_team($current_user_id);
+        $account_type = $tdcwnUtil->get_account_type($current_user_id);
+
+        if ( isset($post) && 'client' != $account_type && $post->ID == ADD_JOB_PAGE ) {
             wp_redirect(home_url());
             exit;
         }
@@ -160,7 +169,8 @@ class YachtRefit {
             return;
         }
 
-        if( $post->post_type === 'job' ) {
+        if( !$update && $post->post_type === 'job' ) {
+
 
             $current_user_id = get_current_user_id();
 //            $post = serialize($post);
@@ -171,47 +181,19 @@ class YachtRefit {
 
 //            $job_terms = get_terms_by( 'term_id', $post_id, 'job' );
 
+            $notification_title = 'New job opportunity: '.$post->post_title;
+
             $notifications_table = $wpdb->prefix . $this->notifications_table;
-//            $insert = $wpdb->insert(
-//              $notifications_table,
-//              array(
-//                  'message' => 'MMMMM',
-//                  'job_id' => 22,
-//                  'client_id' => 33,
-//                  'job_category' => 'spare-parts'
-//              ),
-//              array(
-//                  '%s',
-//                  '%d',
-//                  '%d',
-//                  '%s',
-//              )
-//            );
+
 
             $insert = $wpdb->query(
                 "
                     INSERT INTO $notifications_table
                         (`id`, `message`, `job_id`, `client_id`, `job_category`, `created_at`)
-                        VALUES (NULL, 'New job opportunity!', $post_id, $current_user_id, 'Job', current_timestamp());
+                        VALUES (NULL, '$notification_title', $post_id, $current_user_id, 'Job', current_timestamp());
                 "
             );
-//echo 'first error';
-//            $insert = $wpdb->insert(
-//                'wp_tdcwn_notifications',
-//                array(
-//                    'id' => NULL,
-//                    'message' => 'nnnddsds',
-//                    'job_id' => 3,
-//                    'client_id' => 67,
-//                    'job_category' => 'cat',
-//                    'created_at' => current_timestamp()
-//                )
-//            );
 
-//            echo $wpdb->last_query;
-        //}
-//        else {
-//            echo 'some error';
         }
     }
 

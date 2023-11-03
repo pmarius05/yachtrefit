@@ -670,20 +670,9 @@ $break-big: 900px;
 
       ul {
 
-        >a {
-          display: inline-block;
-          background-color: #f5f5f5;
-          padding: 5px 10px;
-          border-radius: 5px;
-          margin: 5px 15px;
-        }
-
         li {
-          display: flex;
-          //align-items: center;
+          display: -webkit-box;
           padding: 5px;
-          //clear: both;
-          //float: left;
           margin: 15px 15px 5px 15px;
           width: calc(100% - 25px);
           font-size: 0.9em;
@@ -702,15 +691,56 @@ $break-big: 900px;
           &.sent {
             background: $light;
             color: $white;
+
+            a {
+              &.download_link {
+                color: $white;
+                border: 1px solid $white;
+              }
+
+              span {
+                color: $white;
+              }
+            }
           }
 
           &.replies {
             background: $white;
             position: relative;
+
+            a {
+              &.download_link {
+                color: $light;
+                border: 1px solid $light;
+              }
+
+              span {
+                color: $light;
+              }
+            }
           }
 
           a {
-            display: flex;
+            display: inline;
+            margin-right: 5px;
+
+            &.download_link {
+              padding: 1px 6px;
+              align-items: center;
+              border-radius: 5px;
+
+              &:hover {
+                text-decoration: underline;
+              }
+            }
+
+            span {
+              //color: #fff;
+              font-weight: 600;
+              letter-spacing: 1px;
+              font-size: 10px;
+              margin-right: 5px;
+            }
           }
 
           p {

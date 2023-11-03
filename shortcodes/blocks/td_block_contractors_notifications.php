@@ -122,6 +122,9 @@ class td_block_contractors_notifications extends td_block {
         $buffy .= '<br />';
 //        var_dump($all_notifications);
         foreach ($all_notifications as $notification) {
+//            echo '<pre>';
+//            print_r();
+//            echo '</pre>';
             ob_start();
             ?>
 
@@ -139,11 +142,18 @@ class td_block_contractors_notifications extends td_block {
                     </div>
                 </div>
                 <div class="tdcwn_notification_details panel">
+                    <?php $the_job = get_post($notification->job_id); ?>
                     <div class="inner">
                         <p>
                             <strong>Job details</strong>
                         </p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum luctus odio eget mauris condimentum, ut aliquam eros mollis. Curabitur porttitor tincidunt augue vitae pulvinar. Aenean aliquam justo tortor, non tempus eros efficitur id. Praesent quis rutrum libero. Proin vel urna in augue malesuada sodales in quis lectus. Cras sollicitudin a arcu eu iaculis. Aliquam erat volutpat. Nulla quis purus sed massa commodo eleifend.
+                        <?php
+
+//                        echo '<pre>';
+//                            print_r($the_job);
+//                        echo '</pre>';
+                        echo $the_job->post_content;
+                        ?>
                         <div>
                             <a href="<?php echo get_home_url(); ?>/my-account/?messages&chat=0&c=<?php echo $notification->client_id; ?>&j=<?php echo $notification->job_id; ?>" class="action_contact_the_client" title="Contact the client">Contact the client</a>
                             <!--                                <span class="action_contact_the_client c---><?php //echo $notification->client_id; ?><!-- j---><?php //echo $notification->job_id ?><!--" id="action_contact-the-client">Contact the client</span>-->

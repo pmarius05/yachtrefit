@@ -81,7 +81,7 @@ class td_block_chat extends td_block {
         }
 
         // Other file types
-        echo '<a href="' . esc_url($media_url) . '" target="_blank">Download ' . basename($media_url) . '</a>';
+        return '<a href="' . esc_url($media_url) . '" class="download_link" target="_blank"><span class="download-tag">(Download)</span> ' . basename($media_url) . '</a>';
     }
 
     function sanitize_and_validate_file($file) {
@@ -193,7 +193,6 @@ class td_block_chat extends td_block {
     function allowed_user($id)
     {
         $current_user = $id;
-
         if ( 'td_team_member' ==  $this->get_current_user_role()) {
             $the_team_leader = get_user_meta(get_current_user_id(), 'tdcwn_team', true );
 
@@ -220,8 +219,10 @@ class td_block_chat extends td_block {
         }else {
             return false;
         }
-
+        return false;
     }
+
+
 
 
     function render( $atts, $content = null )
@@ -248,7 +249,6 @@ class td_block_chat extends td_block {
 
         $current_user_id = get_current_user_id();
         if ($this->allowed_user($current_user_id)) {
-
 
             if (isset($_GET['chat']) && ctype_alnum($_GET['chat'])) {
 //        if ( isset($_GET['chat']) ) {
@@ -314,7 +314,7 @@ class td_block_chat extends td_block {
 
                         $message = wp_kses_post($_POST['tnm']);
 
-                        if (isset($_FILES['file_to_upload'])) {
+                        if (isset($_FILES['file_to_upload']) && (0 != $_FILES['file_to_upload']['size']) ) {
                             require_once(ABSPATH . 'wp-admin/includes/file.php');
                             $uploadedfile = $_FILES['file_to_upload'];
 
@@ -395,13 +395,25 @@ class td_block_chat extends td_block {
                 }
             }
 
+            global $tdcwnUtil;
 
+            $the_team = $tdcwnUtil->get_the_team($current_user_id);
+            $quoted_array = array_map(function($item){
+                return "'".$item."'";
+            }, $the_team);
+            $the_team_csv = implode(',', $quoted_array);
+//            echo '<pre>';
+//                print_r($the_team);
+//            echo '</pre>';
 
             $get_the_conversations = $wpdb->get_results("SELECT * FROM `$this->messages_index_table` 
-                                                        WHERE `client_id`= '$current_user_id'
-                                                        OR `contractor_id`= '$current_user_id'     
+                                                        WHERE `client_id` IN ($the_team_csv)
+                                                        OR `contractor_id`IN ($the_team_csv)     
                                                     ");
         }
+//        echo '<pre>';
+//        var_dump($get_the_conversations);
+//        echo '</pre>';
         $buffy = ''; //output buffer
 
         $buffy .= "
@@ -427,7 +439,7 @@ class td_block_chat extends td_block {
 
 
         <!--        <link rel="stylesheet" href="--><?php //echo $this->plugin_url;?><!--../assets/css/messaging-system.css">-->
-        <link rel="stylesheet" href="<?php echo esc_url( untrailingslashit($this->plugin_url) . '/../assets/css/messaging-system.css' ); ?>">
+<!--        <link rel="stylesheet" href="--><?php //echo esc_url( untrailingslashit($this->plugin_url) . '/../assets/css/messaging-system.css' ); ?><!--">-->
 
 
 
@@ -517,21 +529,30 @@ class td_block_chat extends td_block {
                         if (isset($get_chat_messages)) {
                             foreach ($get_chat_messages as $the_message) {
                                 $css_class = '';
-                                if ($the_message->user_from == $current_user_id) {
+                                if (in_array($the_message->user_from, $the_team)) {
                                     $css_class = 'sent';
                                 }else {
                                     $css_class = 'replies';
                                 }
-                                echo '
-                            <li class=" ' . $css_class . ' ">
-                            '. $this->display_attachment_by_id($the_message->file_id) .'
-                                <p>' . $the_message->message . ' 
-                                
-                                 </p>
-                                
-                                 <span class="closed toggle-arrow"></span>
-                            </li>
-                            ';
+                                $message_to_display = (strlen($the_message->message) > 0 ) ? '<span>'.$the_message->message.'</span>' : '';
+                                if ( strlen($message_to_display) > 0 ) :
+                                    echo '
+                                        <li class=" ' . $css_class . ' ">
+                                            '. $this->display_attachment_by_id($the_message->file_id) .
+                                                $message_to_display
+                                            . '<span class="closed toggle-arrow"></span>
+                                        </li>
+                                        ';
+                                endif;
+//                                echo $the_message->file_id;
+                                if (0 != ($the_message->file_id)) :
+                                    echo '
+                                        <li class=" ' . $css_class . ' ">
+                                            '. $this->display_attachment_by_id($the_message->file_id)
+                                        . '<span class="closed toggle-arrow"></span>
+                                        </li>
+                                        ';
+                                endif;
                             }
                         }
                         ?>
