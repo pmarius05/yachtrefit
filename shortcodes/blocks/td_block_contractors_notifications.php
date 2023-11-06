@@ -50,7 +50,7 @@ class td_block_contractors_notifications extends td_block {
 
         global $wpdb;
         $all_notifications = $wpdb->get_results(
-            "SELECT * FROM " .$wpdb->prefix . $this->notifications_table
+            "SELECT * FROM " .$wpdb->prefix . $this->notifications_table . " ORDER BY `id` DESC"
         );
 
 
@@ -119,8 +119,10 @@ class td_block_contractors_notifications extends td_block {
         $buffy .= $this->get_block_js();
 
 //        $buffy .= 'This is buffy Cn!';
-        $buffy .= '<br />';
-//        var_dump($all_notifications);
+//        $buffy .= '<br />';
+        echo '<pre>';
+        print_r($all_notifications);
+        echo '</pre>';
         foreach ($all_notifications as $notification) {
 //            echo '<pre>';
 //            print_r();
@@ -142,13 +144,12 @@ class td_block_contractors_notifications extends td_block {
                     </div>
                 </div>
                 <div class="tdcwn_notification_details panel">
-                    <?php $the_job = get_post($notification->job_id); ?>
                     <div class="inner">
                         <p>
                             <strong>Job details</strong>
                         </p>
                         <?php
-
+                        $the_job = get_post($notification->job_id);
 //                        echo '<pre>';
 //                            print_r($the_job);
 //                        echo '</pre>';

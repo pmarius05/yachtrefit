@@ -126,6 +126,26 @@ class tdcwnUtil
 
         return $result;
     }
+
+    public function is_team_leader($user_id) {
+        if (
+            'td_client_role' == $this->get_user_role_by_id($user_id) ||
+            'td_contractor_role' == $this->get_user_role_by_id($user_id)
+        ) {
+          return true;
+        }else {
+            return false;
+        }
+    }
+
+    public function is_team_member ($user_id)
+    {
+        if ( 'td_team_member' == $this->get_user_role_by_id($user_id) ) {
+            return true;
+        }else {
+            return false;
+        }
+    }
 }
 
 $tdcwnUtil = new tdcwnUtil();

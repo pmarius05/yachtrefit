@@ -168,7 +168,7 @@ class td_block_team extends td_block {
             $buffy .= '<input type="text" name="lastname" />';
 
 
-            $buffy .= '<input type="submit" name="register_team_member" />';
+            $buffy .= '<input type="submit" name="register_team_member" value="Add member" />';
             $buffy .= '</form>';
             $buffy .= '</div>';
             $buffy .= '</details>';
@@ -191,11 +191,16 @@ class td_block_team extends td_block {
         $buffy .= '<h5>Team members</h5>';
 
         global $tdcwnUtil;
-        $the_team = $tdcwnUtil->get_the_team(get_current_user_id());
+
+        $the_team = array();
+        if ($tdcwnUtil->is_team_leader(get_current_user_id())) {
+            $the_team = $tdcwnUtil->get_team_members_by_team_leader(get_current_user_id());
+        }elseif ( $tdcwnUtil->is_team_member(get_current_user_id()) ) {
+            $the_team = $tdcwnUtil->get_team_members_by_member_id(get_current_user_id());
+        }
+
         $the_team = $tdcwnUtil->flatten_array($the_team);
-echo '<pre>';
-print_r($the_team);
-echo '</pre>';
+
 
         if ( 'td_team_member' == $this->get_current_user_role() ) {
             $team_members = $this->get_team_members_by_member_id();

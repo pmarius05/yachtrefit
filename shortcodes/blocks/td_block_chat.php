@@ -398,6 +398,10 @@ class td_block_chat extends td_block {
             global $tdcwnUtil;
 
             $the_team = $tdcwnUtil->get_the_team($current_user_id);
+            $the_team = $tdcwnUtil->flatten_array($the_team);
+//            echo '<pre>';
+//                print_r($the_team);
+//            echo '</pre>';
             $quoted_array = array_map(function($item){
                 return "'".$item."'";
             }, $the_team);
