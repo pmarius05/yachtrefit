@@ -1082,44 +1082,72 @@ class tds_my_account_yr extends td_block {
                 'settings_page' => $i == 6
             );
 
-            $pages[sanitize_title($page_title)] = $page;
+//            $pages[sanitize_title($page_title)] = $page;
+            $pages[] = $page;
         }
 //echo '<pre>';
 //print_r($pages);
 //echo '</pre>';
+
         // Loop through the array
-        foreach ($pages as $key => $value) {
-            if (current_user_can('td_contractor_role') && $value['id'] === '855' ) {
-                // Remove this array element
-                unset($pages[$key]);
-                // Reindex the array keys if you want to
-//                $pages = array_values($pages);
-                break; // exit loop since the element is found and removed
-            }
+//        foreach ($pages as $key => $value) {
+//            global $tdcwnUtil;
+//
+//            if ( $value['id'] === ADD_JOB_PAGE ) {
+//                if (
+//                        'client' != $tdcwnUtil->get_account_type( get_current_user_id() )
+//                        || 'administrator' != $tdcwnUtil->get_account_type( get_current_user_id() )
+//                ) {
+//                    unset($pages[$key]);
+//                    break; // exit loop since the element is found and removed
+//                }
+//            }
+//
+////            if ( 'client' != $tdcwnUtil->get_account_type( get_current_user_id() ) && $value['id'] === ADD_JOB_PAGE ) {
+////                unset($pages[$key]);
+////                break; // exit loop since the element is found and removed
+////            }
+//        }
 
-        }
+//        foreach ($pages as $key => $value) {
+//            global $tdcwnUtil;
+//            if ('client' != $tdcwnUtil->get_account_type(get_current_user_id()) && $value['id'] === JOBS_POSTED_PAGE) {
+//                unset($pages[$key]);
+//                break; // exit loop since the element is found and removed
+//            }
+//        }
+//
+//        foreach ($pages as $key => $value) {
+//            global $tdcwnUtil;
+//            if ('contractor' != $tdcwnUtil->get_account_type(get_current_user_id()) && $value['id'] === NOTIFICATIONS_PAGE) {
+//                unset($pages[$key]);
+//                break; // exit loop since the element is found and removed
+//            }
+//        }
+//        echo '<pre>';
+//        print_r($pages);
+//        echo '</pre>';
+//        foreach ($pages as $key => $value) {
+//            if (current_user_can('td_contractor_role') && $value['id'] === '849' ) {
+//                // Remove this array element
+//                unset($pages[$key]);
+//                // Reindex the array keys if you want to
+////                $pages = array_values($pages);
+//                break; // exit loop since the element is found and removed
+//            }
+//
+//        }
 
-        foreach ($pages as $key => $value) {
-            if (current_user_can('td_contractor_role') && $value['id'] === '849' ) {
-                // Remove this array element
-                unset($pages[$key]);
-                // Reindex the array keys if you want to
-//                $pages = array_values($pages);
-                break; // exit loop since the element is found and removed
-            }
-
-        }
-
-        foreach ($pages as $key => $value) {
-            if (current_user_can('td_client_role') && $value['id'] === '895' ) {
-                // Remove this array element
-                unset($pages[$key]);
-                // Reindex the array keys if you want to
-//                $pages = array_values($pages);
-                break; // exit loop since the element is found and removed
-            }
-
-        }
+//        foreach ($pages as $key => $value) {
+//            if (current_user_can('td_client_role') && $value['id'] === '895' ) {
+//                // Remove this array element
+//                unset($pages[$key]);
+//                // Reindex the array keys if you want to
+////                $pages = array_values($pages);
+//                break; // exit loop since the element is found and removed
+//            }
+//
+//        }
 //        echo '<pre>';
 //        print_r($pages);
 //        echo '</pre>';
@@ -1202,11 +1230,11 @@ class tds_my_account_yr extends td_block {
                 !empty($current_custom_page) ||
                 (
                     ( !isset($_GET['account_details']) && !isset($_GET['subscriptions']) && empty( $current_custom_page ) ) &&
-                    $pages['dashboard']['id'] != ''
+                    $pages[0]['id'] != ''
                 ) ||
                 (
                     ( isset($_GET['account_details']) || ( $is_composer && $show_version_in_composer == 'settings' ) ) &&
-                    $pages['account-details']['id'] != ''
+                    $pages[6]['id'] != ''
                 )
             ) {
                 $custom_content_class = 'tds-s-acc-content-custom';
@@ -1229,13 +1257,25 @@ class tds_my_account_yr extends td_block {
                             || ( $is_composer && $show_version_in_composer == '' )
                         ) ? 'tds-san-item-active' : '' ?>"
                            href="<?php echo $tds_dashboard_url ?>">
-                            <span class="tds-san-item-icon" <?php echo $pages['dashboard']['icon_data'] ?>> <?php echo $pages['dashboard']['icon_html'] ?></span>
-                            <span class="tds-san-item-txt"> <?php echo $pages['dashboard']['title'] ?></span>
+                            <span class="tds-san-item-icon" <?php echo $pages[0]['icon_data'] ?>> <?php echo $pages[0]['icon_html'] ?></span>
+                            <span class="tds-san-item-txt"> <?php echo $pages[0]['title'] ?></span>
                         </a>
 
-                        <?php echo $pages['dashboard']['admin_btns'] ?>
+                        <?php echo $pages[0]['admin_btns'] ?>
                     </div>
+                    <div class="tds-san-item-wrap">
+                        <a class="tds-san-item
+                                    <?php echo (
+                            ( isset($_GET['account_details']) )
+                            || ( $is_composer && $show_version_in_composer == 'settings' )
+                        ) ? 'tds-san-item-active' : '' ?>"
+                           href="<?php echo $tds_account_details_url ?>">
+                            <span class="tds-san-item-icon" <?php echo $pages[6]['icon_data'] ?>><?php echo $pages[6]['icon_html'] ?></span>
+                            <span class="tds-san-item-txt"><?php echo $pages[6]['title'] ?></span>
+                        </a>
 
+                        <?php echo $pages[6]['admin_btns'] ?>
+                    </div>
                     <div class="tds-san-item-wrap xxx">
                         <a class="tds-san-item
                                     <?php echo (
@@ -1250,7 +1290,30 @@ class tds_my_account_yr extends td_block {
 
                     <?php
 
+                    //                    echo '<pre>';
+                    //                        print_r($pages);
+                    //                    echo '</pre>';
+
+                    global $tdcwnUtil;
                     foreach ( $pages as $page_data ) {
+
+                        if ( $page_data['id'] === ADD_JOB_PAGE || $page_data['id'] === JOBS_POSTED_PAGE ) {
+                            if (
+                                'client' != $tdcwnUtil->get_account_type( get_current_user_id() )
+                                || 'administrator' != $tdcwnUtil->get_account_type( get_current_user_id() )
+                            ) {
+                                continue;
+                            }
+                        }
+
+                        if ( $page_data['id'] === NOTIFICATIONS_PAGE ) {
+                            if (
+                                'contractor' != $tdcwnUtil->get_account_type( get_current_user_id() )
+                                || 'administrator' != $tdcwnUtil->get_account_type( get_current_user_id() )
+                            ) {
+                                continue;
+                            }
+                        }
 
                         if ( !$page_data['dashboard_page'] && !$page_data['settings_page'] && $page_data['id'] != '' && get_post_type($page_data['id']) == 'page' ) { ?>
 
@@ -1265,7 +1328,7 @@ class tds_my_account_yr extends td_block {
                                 </a>
                                 <?php echo $page_data['admin_btns'] ?>
                             </div>
-                    <?php
+                            <?php
                         }
 
                     }?>
@@ -1316,16 +1379,16 @@ class tds_my_account_yr extends td_block {
 //                            }
                 } else if ( isset($_GET['account_details']) || ( $is_composer && $show_version_in_composer == 'settings' ) ) {
                     $show_notif = ( $is_composer && $show_notif_in_composer ) ? 'show_notif="yes"' : '';
-                    $custom_page_id = $pages['account-details']['id'] != '' ? 'custom_page_id="' . $pages['account-details']['id'] . '"' : '';
+                    $custom_page_id = $pages[6]['id'] != '' ? 'custom_page_id="' . $pages[6]['id'] . '"' : '';
 
                     td_global::set_in_element( true );
                     echo do_shortcode('[tds_account_details ' . $custom_page_id . ' ' . $show_notif  . ']');
                     td_global::set_in_element( false );
 
                 } else {
-                    if( $pages['dashboard']['id'] != '' ) {
+                    if( $pages[0]['id'] != '' ) {
 
-                        echo $this->render_page_content( $pages['dashboard']['id'], $pages['dashboard']['title'], __td('Welcome to your account!', TD_THEME_NAME ) );
+                        echo $this->render_page_content( $pages[0]['id'], $pages[0]['title'], __td('Welcome to your account!', TD_THEME_NAME ) );
 
                     } else {
 

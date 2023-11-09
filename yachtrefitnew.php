@@ -7,7 +7,7 @@
  * Description: Custom options
  * Author: tagDiv
  * Author URI: https://www.tagdiv.com
- * Version: 0.2.1
+ * Version: 0.3.1
  *
  */
 
@@ -18,6 +18,8 @@ define( 'TDCW_YR_URL', plugin_dir_url( __FILE__ ) );
 define( 'TDCW_YR_PATH', dirname( __FILE__ ) );
 
 define( 'ADD_JOB_PAGE', '906');
+define( 'JOBS_POSTED_PAGE', '904' );
+define ( 'NOTIFICATIONS_PAGE', '900' );
 
 require_once ('includes/tdcwnUtil.php');
 //require_once ('database/index.php');
@@ -40,8 +42,8 @@ class YachtRefit {
 //        add_action( 'template_redirect', array($this, 'manage_access_to_client_dashboard') );
         add_action( 'wp_enqueue_scripts', array( $this, 'define_ajax_url' ) );
         add_action('wp_enqueue_scripts', array($this, 'tdcwn_load_assets') );
-//        add_action( 'template_redirect', array($this, 'manage_access_to_client_dashboard') );
-        add_action( 'template_redirect', array($this, 'manage_user_pages_access') );
+//        //////add_action( 'template_redirect', array($this, 'manage_access_to_client_dashboard') );
+//        add_action( 'template_redirect', array($this, 'manage_user_pages_access') );
         add_action( 'save_post_job', array( $this, 'register_notification' ), 10, 3 );
         add_action( 'wp_ajax_tdcwn_send_message', array( $this, 'tdcwn_send_message' ) );
     }
@@ -146,10 +148,20 @@ class YachtRefit {
         $the_team = $tdcwnUtil->get_the_team($current_user_id);
         $account_type = $tdcwnUtil->get_account_type($current_user_id);
 
-        if ( isset($post) && 'client' != $account_type && $post->ID == ADD_JOB_PAGE ) {
-            wp_redirect(home_url());
-            exit;
+        if ( $post->ID == ADD_JOB_PAGE )
+        {
+            if (
+                isset($post) && 'client' != $account_type
+                || isset($post) && 'administrator' != $account_type
+            ) {
+                wp_redirect(home_url());
+                exit;
+            }
         }
+
+//        if ( isset($post) && 'client' != $account_type && $post->ID == ADD_JOB_PAGE ) {
+//
+//        }
     }
 
     function register_notification ( $post_id, $post, $update )

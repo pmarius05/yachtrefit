@@ -478,24 +478,29 @@ class td_block_chat extends td_block {
                     <ul>
                         <?php
                         global $wp;
-                        foreach ($get_the_conversations as $conversation) {
-                            $active_conversation_class = '';
-                            if (isset($current_conversation_id) && $conversation->id == $current_conversation_id) $active_conversation_class = 'active';
-                            echo '
-                                    <li class="contact '. $active_conversation_class .'">
-                                        <a href="'.home_url($wp->request).'/?messages&chat='.$conversation->chat_id.'" class="for-mobile">
-                                            <span class="name">#' . $conversation->id .  ' </span>
-                                        </a>
-                                        
-                                        <a href="'.home_url($wp->request).'/?messages&chat='.$conversation->chat_id.'">
-                                            <div class="wrap">
-                                                <div class="meta">
-                                                    <p class="name">Conversation #' . $conversation->id .  ' </p>
+                        if (isset($get_the_conversations)) {
+                            foreach ($get_the_conversations as $conversation) {
+                                $active_conversation_class = '';
+                                if (isset($current_conversation_id) && $conversation->id == $current_conversation_id) $active_conversation_class = 'active';
+                                echo '
+                                        <li class="contact ' . $active_conversation_class . '">
+                                            <a href="' . home_url($wp->request) . '/?messages&chat=' . $conversation->chat_id . '" class="for-mobile">
+                                                <span class="name">#' . $conversation->id . ' </span>
+                                            </a>
+                                            
+                                            <a href="' . home_url($wp->request) . '/?messages&chat=' . $conversation->chat_id . '">
+                                                <div class="wrap">
+                                                    <div class="meta">
+                                                        <p class="name">Conversation #' . $conversation->id . ' </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </a>
-                                    </li>
-                                ';
+                                            </a>
+                                        </li>
+                                    ';
+                            }
+                        }
+                        else {
+                            echo '<p style="padding: 10px;">Only "client" and "contractor" account types can use the Messaging system.</p>';
                         }
                         ?>
 

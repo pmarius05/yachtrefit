@@ -955,3 +955,19 @@ details[open] .content {
   font-size: 16px;
   font-weight: 400;
 }
+
+.tdcwn_notifications_pagination_links {
+  margin-top: 15px;
+}
+.tdcwn_notifications_pagination_links a {
+  background-color: #F9F9F9;
+  padding: 5px 10px;
+  color: #000000;
+  border: 1px solid #C4C4C4;
+  margin-right: 5px;
+}
+.tdcwn_notifications_pagination_links a.active {
+  background-color: var(--td_theme_color);
+  color: #ffffff;
+  font-weight: 600;
+}

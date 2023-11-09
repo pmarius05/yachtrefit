@@ -53,6 +53,13 @@ class td_block_contractors_notifications extends td_block {
             "SELECT * FROM " .$wpdb->prefix . $this->notifications_table . " ORDER BY `id` DESC"
         );
 
+        // Define the number of notifications per page
+        $notifications_per_page = 10;
+
+        // Calculate the total number of pages
+        $total_pages = ceil(count($all_notifications) / $notifications_per_page);
+
+
 
 
         $buffy = ''; //output buffer
@@ -120,13 +127,11 @@ class td_block_contractors_notifications extends td_block {
 
 //        $buffy .= 'This is buffy Cn!';
 //        $buffy .= '<br />';
-        echo '<pre>';
-        print_r($all_notifications);
-        echo '</pre>';
+//        echo '<pre>';
+//        print_r($all_notifications);
+//        echo '</pre>';
         foreach ($all_notifications as $notification) {
-//            echo '<pre>';
-//            print_r();
-//            echo '</pre>';
+
             ob_start();
             ?>
 
@@ -166,6 +171,67 @@ class td_block_contractors_notifications extends td_block {
             <?php
             $buffy .= ob_get_clean();
         }
+
+
+        // Start the output buffer
+        ob_start();
+        ?>
+
+        <div id="notification-container">
+            <!-- Notifications will be dynamically loaded here -->
+        </div>
+
+        <div id="pagination-links" class="tdcwn_notifications_pagination_links">
+            <?php for ($page = 1; $page <= $total_pages; $page++): ?>
+                <a href="#" class="<?php echo $page == 1 ? 'active' : ''; ?>" data-page="<?php echo $page; ?>" onclick="changePage(<?php echo $page; ?>); return false;">
+                    <?php echo $page; ?>
+                </a>
+            <?php endfor; ?>
+        </div>
+
+        <script>
+            function changePage(page) {
+                // Save the current page to localStorage
+                localStorage.setItem('current_page', page);
+
+                // Hide all notifications
+                document.querySelectorAll('.tdcwn_notification').forEach(function(item) {
+                    item.style.display = 'none';
+                });
+
+                // Calculate the index range of notifications to show
+                var start = (page - 1) * <?php echo $notifications_per_page; ?>;
+                var end = start + <?php echo $notifications_per_page; ?>;
+
+                // Show the notifications for the current page
+                var currentItems = Array.from(document.querySelectorAll('.tdcwn_notification')).slice(start, end);
+                currentItems.forEach(function(item) {
+                    item.style.display = 'block';
+                });
+
+                // Update the active class on the pagination links
+                document.querySelectorAll('#pagination-links a').forEach(function(link) {
+                    link.classList.remove('active');
+                });
+                document.querySelector('#pagination-links a[data-page="' + page + '"]').classList.add('active');
+            }
+
+            // Load the initial page from localStorage or default to the first page
+            document.addEventListener('DOMContentLoaded', function() {
+                var currentPage = localStorage.getItem('current_page') || 1;
+                changePage(currentPage);
+            });
+
+            // Load the initial page from localStorage or default to the first page
+            document.addEventListener('DOMContentLoaded', function() {
+                var currentPage = localStorage.getItem('current_page') || 1;
+                changePage(currentPage);
+            });
+        </script>
+
+        <?php
+        // Get the buffer content
+        $buffy .= ob_get_clean();
 
 
 
