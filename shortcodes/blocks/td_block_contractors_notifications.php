@@ -48,10 +48,53 @@ class td_block_contractors_notifications extends td_block {
             $is_composer = true;
         }
 
+//        $contractors_selected_job_categories = get_user_meta(get_current_user_id(), 'tdcwn_job_cat_selected', true);
+//
+//        if (empty($contractors_selected_job_categories)) {
+//            echo 'You have to select the categories you want to subscribe to, in order to see the notifications.'
+//        }
+
         global $wpdb;
-        $all_notifications = $wpdb->get_results(
+        $all_notifications_1 = $wpdb->get_results(
             "SELECT * FROM " .$wpdb->prefix . $this->notifications_table . " ORDER BY `id` DESC"
         );
+
+        $all_notifications = array();
+        foreach ($all_notifications_1 as $notification) {
+//            echo '<pre>';
+//                print_r($notification);
+//            echo '</pre>';
+//            echo $notification->job_id;
+            $job_categories = get_the_terms($notification->job_id, 'job-category');
+            if ( false ==  $job_categories ) {
+                $job_categories = array();
+            }
+            $contractors_selected_job_categories = get_user_meta(get_current_user_id(), 'tdcwn_job_cat_selected', true);
+            if (empty($contractors_selected_job_categories)) {
+                $contractors_selected_job_categories = array();
+            }
+//            echo '<pre>';
+//                print_r($contractors_selected_job_categories);
+//            echo '</pre>';
+
+//            echo '<pre><div>$job_categories</div>';
+//            print_r($job_categories);
+//            echo '</pre>';
+
+            $termIds = array_map(function($term) {
+                return $term->term_id;
+            }, $job_categories);
+
+//            echo '<pre>';
+//            print_r($termIds);
+//            echo '</pre>';
+
+//            $result=array_intersect($a1,$a2);
+
+            if (!empty(array_intersect($contractors_selected_job_categories, $termIds))) {
+                $all_notifications[] = $notification;
+            }
+        }
 
         // Define the number of notifications per page
         $notifications_per_page = 10;

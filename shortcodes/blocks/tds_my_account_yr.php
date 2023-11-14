@@ -1290,17 +1290,17 @@ class tds_my_account_yr extends td_block {
 
                     <?php
 
-                    //                    echo '<pre>';
-                    //                        print_r($pages);
-                    //                    echo '</pre>';
+//                                        echo '<pre>';
+//                                            print_r($pages);
+//                                        echo '</pre>';
 
                     global $tdcwnUtil;
                     foreach ( $pages as $page_data ) {
 
                         if ( $page_data['id'] === ADD_JOB_PAGE || $page_data['id'] === JOBS_POSTED_PAGE ) {
                             if (
-                                'client' != $tdcwnUtil->get_account_type( get_current_user_id() )
-                                || 'administrator' != $tdcwnUtil->get_account_type( get_current_user_id() )
+                                'contractor' == $tdcwnUtil->get_account_type( get_current_user_id() )
+                                || 'administrator' == $tdcwnUtil->get_account_type( get_current_user_id() )
                             ) {
                                 continue;
                             }
@@ -1308,8 +1308,8 @@ class tds_my_account_yr extends td_block {
 
                         if ( $page_data['id'] === NOTIFICATIONS_PAGE ) {
                             if (
-                                'contractor' != $tdcwnUtil->get_account_type( get_current_user_id() )
-                                || 'administrator' != $tdcwnUtil->get_account_type( get_current_user_id() )
+                                'client' == $tdcwnUtil->get_account_type( get_current_user_id() )
+                                || 'administrator' == $tdcwnUtil->get_account_type( get_current_user_id() )
                             ) {
                                 continue;
                             }

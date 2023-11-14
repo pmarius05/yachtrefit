@@ -7,7 +7,7 @@
  * Description: Custom options
  * Author: tagDiv
  * Author URI: https://www.tagdiv.com
- * Version: 0.3.1
+ * Version: 0.3.6
  *
  */
 
@@ -20,6 +20,15 @@ define( 'TDCW_YR_PATH', dirname( __FILE__ ) );
 define( 'ADD_JOB_PAGE', '906');
 define( 'JOBS_POSTED_PAGE', '904' );
 define ( 'NOTIFICATIONS_PAGE', '900' );
+
+//PLAN_1
+define( 'PLAN_1', '2' );
+define( 'JOB_CATS_PLAN_1', '3');
+
+//PLAN_2
+define( 'PLAN_2', '3' );
+define( 'JOB_CATS_PLAN_2', '5');
+
 
 require_once ('includes/tdcwnUtil.php');
 //require_once ('database/index.php');
