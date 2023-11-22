@@ -55,6 +55,8 @@ class YachtRefit {
 //        add_action( 'template_redirect', array($this, 'manage_user_pages_access') );
         add_action( 'save_post_job', array( $this, 'register_notification' ), 10, 3 );
         add_action( 'wp_ajax_tdcwn_send_message', array( $this, 'tdcwn_send_message' ) );
+
+        add_action( 'wp_enqueue_scripts', array($this, 'add_intTel') );
     }
 
     public function define_ajax_url()
@@ -220,6 +222,14 @@ class YachtRefit {
 
     public function tdcwn_load_assets() {
         wp_enqueue_style('tdcwn_yr_main', $this->plugin_url.'/assets/css/tdcwn_yr_main.css', '', '', 'all');
+    }
+
+    function add_intTel()
+    {
+        wp_enqueue_style('intTelInputStyle', $this->plugin_url . '/assets/intTelInput/css/intlTelInput.css', array(), true, 'all' );
+        wp_enqueue_style('intTelInputStyleCustom', $this->plugin_url . '/assets/intTelInput/css/style.css', array(), true, 'all' );
+        wp_enqueue_script('intTelInputScript', $this->plugin_url . '/assets/intTelInput/js/intlTelInput.js', array(), true, true);
+        wp_enqueue_script('intTelInputScriptCustom', $this->plugin_url . '/assets/intTelInput/js/script.js', array(), true, true);
     }
 
 }

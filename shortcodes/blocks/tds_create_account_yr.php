@@ -344,6 +344,8 @@ class tds_create_account_yr extends td_block {
 
     function __construct() {
         parent::disable_loop_block_features();
+
+
     }
 
     function render( $atts, $content = null ) {
@@ -546,6 +548,32 @@ class tds_create_account_yr extends td_block {
                                             <svg class="tds-s-form-select-icon" xmlns="http://www.w3.org/2000/svg" width="8.947" height="12.578" viewBox="0 0 8.947 12.578"><g transform="translate(7.947 1) rotate(90)"><path d="M0,7.947A1,1,0,0,1-.58,7.761,1,1,0,0,1-.815,6.366l2.06-2.893L-.815.58A1,1,0,0,1-.58-.815,1,1,0,0,1,.815-.58L3.288,2.893a1,1,0,0,1,0,1.16L.815,7.527A1,1,0,0,1,0,7.947Z" transform="translate(8.104 0)"/><path d="M2.474,7.947a1,1,0,0,1-.815-.42L-.815,4.053a1,1,0,0,1,0-1.16L1.659-.58A1,1,0,0,1,3.053-.815,1,1,0,0,1,3.288.58L1.228,3.473l2.06,2.893a1,1,0,0,1-.814,1.58Z" transform="translate(0 0)"/></g></svg>
                                         </div>
                                     </div>
+
+                                    <div class="tds-s-form-group tds-cayr-role">
+                                        <label class="tds-s-form-label" for="tds_register_region_yr">Region</label>
+                                        <div class="tds-s-form-select-wrap">
+                                            <select class="tds-s-form-input" id="tds_register_region_yr" name="register_region_yr">
+                                                <option value="">-- Select region --</option>
+                                                <option value="td_region_americas">Americas</option>
+                                                <option value="td_region_europe">Europe</option>
+                                                <option value="td_region_middle_east">Middle East</option>
+                                                <option value="td_region_far_east">Far East</option>
+                                                <option value="td_region_uk">UK</option>
+                                                <option value="td_region_australasia">Australasia</option>
+                                            </select>
+                                            <svg class="tds-s-form-select-icon" xmlns="http://www.w3.org/2000/svg" width="8.947" height="12.578" viewBox="0 0 8.947 12.578"><g transform="translate(7.947 1) rotate(90)"><path d="M0,7.947A1,1,0,0,1-.58,7.761,1,1,0,0,1-.815,6.366l2.06-2.893L-.815.58A1,1,0,0,1-.58-.815,1,1,0,0,1,.815-.58L3.288,2.893a1,1,0,0,1,0,1.16L.815,7.527A1,1,0,0,1,0,7.947Z" transform="translate(8.104 0)"/><path d="M2.474,7.947a1,1,0,0,1-.815-.42L-.815,4.053a1,1,0,0,1,0-1.16L1.659-.58A1,1,0,0,1,3.053-.815,1,1,0,0,1,3.288.58L1.228,3.473l2.06,2.893a1,1,0,0,1-.814,1.58Z" transform="translate(0 0)"/></g></svg>
+                                        </div>
+                                    </div>
+
+                                    <div class="tds-s-form-group tds-cayr-role">
+                                        <label class="tds-s-form-label" for="register_phone_yr">Phone</label>
+                                        <div class="tds-s-form-select-wrap">
+
+                                            <input id="tds_cwn_register_phoneTelCode" type="tel" class="tds-s-form-input phoneTelCode" placeholder="Enter your mobile number" name="phone">
+
+                                        </div>
+                                    </div>
+
                                 </div>
 
                                 <?php if( $is_composer && $show_notif_in_composer ) { ?>
@@ -780,4 +808,6 @@ class tds_create_account_yr extends td_block {
 
         return $buffy;
     }
+
+
 }

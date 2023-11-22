@@ -13,7 +13,18 @@ jQuery(document).ready(function () {
             $registerPass = jQuery( '#tds_register_pass_yr' ),
             $registerRetypePass = jQuery( '#tds_register_retype_pass_yr' ),
             $registerRole = jQuery( '#tds_register_role_yr' ),
+            $registerRegion = jQuery( '#tds_register_region_yr' ),
+            $registerPhoneCountry = jQuery( '.iti__selected-flag' );
+            $registerPhone = jQuery( '#tds_cwn_register_phoneTelCode' );
             $registerCaptchaEl = jQuery( '#gRecaptchaResponseR' );
+
+
+        let registerPhoneCountryVal = $registerPhoneCountry.attr('title');
+        let parts = registerPhoneCountryVal.split(": ");
+        let phone_country = parts[0];
+        let phone_code = parts[1];
+        let phone_intl = registerPhoneCountryVal;
+        // console.log( 'CountryCode: ' +  registerPhoneCountryVal );
 
         if ( $registerEmail.length && $registerUser.length && $registerPass.length && $registerRetypePass.length && $registerRole.length ) {
             var registerEmailVal = $registerEmail.val().trim(),
@@ -21,8 +32,12 @@ jQuery(document).ready(function () {
                 registerPassVal = $registerPass.val().trim(),
                 registerRetypePassVal = $registerRetypePass.val().trim(),
                 registerRoleVal = $registerRole.find('option:selected').val(),
+                registerRegionVal = $registerRegion.find('option:selected').val(),
+                registerPhoneVal = $registerPhone.val().trim();
                 captchaKey = $registerCaptchaEl.attr('data-sitekey'),
                 captchaToken = '';
+
+
 
             if ( !tdLogin.email_pattern.test( registerEmailVal )) {
                 tdLogin.addRemoveClass( ['.td_display_err', 1, 'tds-s-notif-error'] );
@@ -66,6 +81,24 @@ jQuery(document).ready(function () {
                 return;
             }
 
+            if ( registerRegionVal === '' ) {
+                tdLogin.addRemoveClass( ['.td_display_err', 1, 'tds-s-notif-error'] );
+                tdLogin.addRemoveClass( ['.td_display_err', 0, 'tds-s-notif-success'] );
+                tdLogin.showHideMsg( 'Please select a region.' );
+                return;
+            }
+
+
+
+            if ( registerPhoneVal === '' ) {
+                tdLogin.addRemoveClass( ['.td_display_err', 1, 'tds-s-notif-error'] );
+                tdLogin.addRemoveClass( ['.td_display_err', 0, 'tds-s-notif-success'] );
+                tdLogin.showHideMsg( 'Please select a phone number.' );
+                return;
+            }
+
+            console.log('Region ' + registerRegionVal);
+
             if ( $registerCaptchaEl.length ){ //google recaptcha v3
                 grecaptcha.ready(function() {
                     grecaptcha.execute(captchaKey, {action: 'submit'}).then(function(token) {
@@ -75,7 +108,7 @@ jQuery(document).ready(function () {
                 });
             } else { //google recaptcha is disabled from panel
                 //call ajax
-                registerAction( registerEmailVal, registerUserVal, registerPassVal, registerRetypePassVal, registerRoleVal );
+                registerAction( registerEmailVal, registerUserVal, registerPassVal, registerRetypePassVal, registerRoleVal, registerRegionVal, registerPhoneVal, phone_country, phone_code, phone_intl );
             }
 
         }
@@ -88,7 +121,7 @@ jQuery(document).ready(function () {
 
 
 
-function registerAction( sent_email, sent_user, sent_pass, sent_retype_pass, sent_role, sent_captcha ) {
+function registerAction( sent_email, sent_user, sent_pass, sent_retype_pass, sent_role, sent_region, sent_phone, phone_country, phone_code, phone_intl, sent_captcha ) {
 
     var data = {
         action: 'td_mod_subscription_register_yr',
@@ -97,6 +130,11 @@ function registerAction( sent_email, sent_user, sent_pass, sent_retype_pass, sen
         pass: sent_pass,
         retype_pass: sent_retype_pass,
         role: sent_role,
+        region: sent_region,
+        phone_country: phone_country,
+        phone_code: phone_code,
+        phone_intl: phone_intl,
+        phone: sent_phone,
         captcha: sent_captcha
     };
 

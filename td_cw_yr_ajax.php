@@ -62,6 +62,30 @@ class td_cw_yr_ajax {
                 $register_role = $_POST['role'];
             }
 
+            $register_region = '';
+            if ( !empty( $_POST['region'] ) ) {
+                $register_region = $_POST['region'];
+            }
+
+            $register_phone = '';
+            if ( !empty( $_POST['phone'] ) ) {
+                $register_phone = $_POST['phone'];
+            }
+
+            $phone_code = '';
+            if ( !empty( $_POST['phone_code'] ) ) {
+                $phone_code = $_POST['phone_code'];
+            }
+
+            $phone_country = '';
+            if ( !empty( $_POST['phone_country'] ) ) {
+                $phone_country = $_POST['phone_country'];
+            }
+
+            $phone_intl = '';
+            if ( !empty( $_POST['phone_intl'] ) ) {
+                $phone_intl = $_POST['phone_intl'];
+            }
 
             //check user existence before adding it
             $user_id = username_exists($register_user);
@@ -173,6 +197,17 @@ class td_cw_yr_ajax {
                     'creation_time' => strtotime('now'),
                     'validation_time' => ''
                 ]);
+
+                add_user_meta($user_id, 'tds_cwn_region', $register_region);
+
+                $tds_cwn_phone = array(
+                    'phone_number' => $register_phone,
+                    'phone_codenumber' => $phone_code.$register_phone,
+                    'phone_code' => $phone_code,
+                    'phone_country' => $phone_country,
+                    'phone_intl' => $phone_intl
+                );
+                add_user_meta($user_id, 'tds_cwn_phone', $tds_cwn_phone);
 
                 //send email to $register_email
                 td_util::td_new_subscriber_user_notifications($user_id, 'both');
