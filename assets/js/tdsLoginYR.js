@@ -97,8 +97,6 @@ jQuery(document).ready(function () {
                 return;
             }
 
-            console.log('Region ' + registerRegionVal);
-
             if ( $registerCaptchaEl.length ){ //google recaptcha v3
                 grecaptcha.ready(function() {
                     grecaptcha.execute(captchaKey, {action: 'submit'}).then(function(token) {

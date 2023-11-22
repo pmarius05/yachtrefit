@@ -7,7 +7,7 @@
  * Description: Custom options
  * Author: tagDiv
  * Author URI: https://www.tagdiv.com
- * Version: 0.3.6
+ * Version: 0.3.7
  *
  */
 
