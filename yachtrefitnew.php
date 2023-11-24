@@ -7,13 +7,15 @@
  * Description: Custom options
  * Author: tagDiv
  * Author URI: https://www.tagdiv.com
- * Version: 0.3.7
+ * Version: 0.3.8
  *
  */
 
 if ( !function_exists( 'add_action' )) { exit; }
 
-define( 'TDCW_YR_VER', '1' );
+define('TDCWN_YR_PLUGIN_VERSION', '0.3.8');
+
+define( 'TDCW_YR_VER', '2' );
 define( 'TDCW_YR_URL', plugin_dir_url( __FILE__ ) );
 define( 'TDCW_YR_PATH', dirname( __FILE__ ) );
 
@@ -221,15 +223,15 @@ class YachtRefit {
     }
 
     public function tdcwn_load_assets() {
-        wp_enqueue_style('tdcwn_yr_main', $this->plugin_url.'/assets/css/tdcwn_yr_main.css', '', '', 'all');
+        wp_enqueue_style('tdcwn_yr_main', $this->plugin_url.'/assets/css/tdcwn_yr_main.css', '', TDCWN_YR_PLUGIN_VERSION, 'all');
     }
 
     function add_intTel()
     {
-        wp_enqueue_style('intTelInputStyle', $this->plugin_url . '/assets/intTelInput/css/intlTelInput.css', array(), true, 'all' );
-        wp_enqueue_style('intTelInputStyleCustom', $this->plugin_url . '/assets/intTelInput/css/style.css', array(), true, 'all' );
-        wp_enqueue_script('intTelInputScript', $this->plugin_url . '/assets/intTelInput/js/intlTelInput.js', array(), true, true);
-        wp_enqueue_script('intTelInputScriptCustom', $this->plugin_url . '/assets/intTelInput/js/script.js', array(), true, true);
+        wp_enqueue_style('intTelInputStyle', $this->plugin_url . '/assets/intTelInput/css/intlTelInput.css', array(), TDCWN_YR_PLUGIN_VERSION, 'all' );
+        wp_enqueue_style('intTelInputStyleCustom', $this->plugin_url . '/assets/intTelInput/css/style.css', array(), TDCWN_YR_PLUGIN_VERSION, 'all' );
+        wp_enqueue_script('intTelInputScript', $this->plugin_url . '/assets/intTelInput/js/intlTelInput.js', array(), TDCWN_YR_PLUGIN_VERSION, true);
+        wp_enqueue_script('intTelInputScriptCustom', $this->plugin_url . '/assets/intTelInput/js/script.js', array(), TDCWN_YR_PLUGIN_VERSION, true);
     }
 
 }

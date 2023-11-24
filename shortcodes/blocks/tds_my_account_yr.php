@@ -1026,7 +1026,7 @@ class tds_my_account_yr extends td_block {
         }
 
         // custom pages
-        $pages_count = 7;
+        $pages_count = 9;
         $pages = array();
 
         for ( $i = 0; $i < $pages_count; $i++ ) {
